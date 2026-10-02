@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "DubBitig’e kaydet",
+  "version": "1.6.0",
+  "description": "Seçili metinleri, komutları ve bağlantıları yerel DubBitig arşivine kaydet.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnw/Hp7osuIFEge/vGUyVrEBnqyZ07hgMcZDzgh6D5UHLWvNFkD/R2jdGc5CZCLlu+KTn//br2abCrV8nxdu1HXvUzQ8Yd+32rIy6vCQZrsR7cNISJTswZ3owahnb077DX4QHkGDvrEXLeR8mspc7m5ic09tKPNXTCyEzVUBNmWRCx1SE0iU5ztxMS6PHun20CS1cMEQ7anhceYyKDzkkY24AUROCVRnadtp6wqPzyrMnpb+roYsm3P16xe+PIXChS6b9YAvUcl/DZByTAOQGtZy8SSMHIkNZO4l+B+Vm11YlVj9wT/borksS2tRM2UyE/laSZI6M0VmqcVRtYshR8QIDAQAB",
+  "permissions": [
+    "contextMenus",
+    "nativeMessaging",
+    "storage",
+    "notifications",
+    "activeTab"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "DubBitig’e kaydet"
+  },
+  "icons": {
+    "128": "icon.png"
+  }
+}
