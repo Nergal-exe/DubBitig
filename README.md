@@ -4,6 +4,40 @@ Komut, program, bağlantı, Markdown notu ve fotoğraflar için Türkçe kişise
 
 **[Windows Setup indir](https://github.com/Nergal-exe/DubBitig/releases/latest)** · [Tüm sürümler ve Chrome eklentisi](https://github.com/Nergal-exe/DubBitig/releases) · [Hata bildir](https://github.com/Nergal-exe/DubBitig/issues)
 
+**Lisans:** [GNU General Public License v3.0 (GPLv3)](LICENSE.txt)
+
+## Ekran görüntüleri
+
+### Ana ekran
+
+Kayıt türleri, arama, sıralama ve kategori/etiket yönetimine erişim sunan koyu temalı arşiv ekranı.
+
+![DubBitig ana ekranı: sol menü, arama alanı ve yeni kayıt oluşturma](docs/screenshots/ana-ekran.png)
+
+### Yeni kayıt ve Markdown düzenleyici
+
+Komut, program, bağlantı, not veya fotoğraf kaydı oluşturma; Markdown biçimlendirme ve önizleme seçenekleri.
+
+![Bağlantı kaydı oluşturma formu ve Markdown düzenleyici](docs/screenshots/yeni-kayit.png)
+
+### Yedekleme
+
+Otomatik yedekleme aralığını seçme, elle yedek alma ve mevcut yedekleri geri yükleme.
+
+![Otomatik yedekleme sıklığı ve yerel yedekler](docs/screenshots/yedekleme.png)
+
+### Genel ayarlar
+
+Bağlantı denetimi, bildirim testi ve sistem tepsisinde çalışma hakkında bilgiler.
+
+![Bağlantı denetimi, hatırlatıcılar ve sistem tepsisi ayarları](docs/screenshots/genel-ayarlar.png)
+
+### Veri yönetimi
+
+Veri klasörüne erişim, içeri/dışarı aktarma, dosyadan geri yükleme ve bütün verileri silme seçenekleri.
+
+![Veri konumu, arşiv aktarımı ve bütün verileri silme bölümü](docs/screenshots/veri-yonetimi.png)
+
 ## Kurulum ve veri konumu
 
 `release-dubbitig/DubBitig-1.6.0-Setup.exe` dosyasını çalıştırın. Kurulum yönetici izni ister; varsayılan uygulama konumu `C:\Program Files\DubBitig` olur. Eski sürümü kurulumdan önce kapatın. Setup önceki kullanıcı kurulumunu yükseltir; arşivi silmez. `DubBitig-Baslat.cmd` önce Program Files içindeki sürümü açar.
@@ -71,3 +105,7 @@ npm.cmd run test:capture
 Renderer sandbox, contextIsolation ve nodeIntegration=false kullanır. Harici adresler HTTP/HTTPS olarak sistem tarayıcısında açılır. Web isteklerinde boyut/zaman/yönlendirme ve özel ağ adresi kontrolleri bulunur. Telemetri yoktur. Mevcut sürüm yereldir; çalışan self-hosted/web senkronizasyonu yoktur. Sonraki adım kimlik doğrulamalı HTTP adapterları, kalıcı outbox, cihaz kimliği ve çakışma yönetimidir.
 
 Windows paketinde kod imzası bulunmaz; dağıtım imzası ayrıca yapılandırılabilir.
+
+## Lisans
+
+DubBitig, **GNU General Public License v3.0 (GPLv3)** lisansı altında sunulur. Lisansın tam metnine [LICENSE.txt](LICENSE.txt) dosyasından ulaşabilirsiniz.
