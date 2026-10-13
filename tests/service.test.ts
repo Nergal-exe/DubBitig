@@ -265,3 +265,21 @@ test('site önizlemesi bildirilen karakter kümesiyle çözülür', () => {
   assert.match(decodeHtml(html, 'text/html; charset=windows-1254'), /İstanbul şehir/);
   assert.match(decodeHtml(Buffer.from('<meta charset="utf-8"><title>Çay</title>')), /Çay/);
 });
+test('çöp kutusunu boşaltmak yalnızca silinen kayıtları ve artık kullanılmayan fotoğrafları kalıcı siler', async () => {
+  const f = await fixture(); try {
+    const path = join(f.dir, 'kaynak.png'); writeFileSync(path, pngBytes);
+    const shared = f.service.addPhoto(path), own = f.service.addPhoto(path), pending = f.service.addPhoto(path);
+    const kept = f.service.save({ ...draft('Kalan'), assets: [shared] });
+    const gone = f.service.save({ ...draft('Silinecek'), assets: [shared, own] }); f.service.trash(gone.id);
+    const other = f.service.save(draft('Diğer çöp')); f.service.trash(other.id);
+    assert.throws(() => f.service.emptyTrash(kept.id), /bulunamadı/);
+    const one = f.service.emptyTrash(gone.id);
+    assert.equal(one.entries, 1); assert.equal(one.files, 1);
+    assert.ok(existsSync(join(f.service.assetPath, shared.id))); assert.ok(!existsSync(join(f.service.assetPath, own.id)));
+    assert.ok(existsSync(join(f.service.assetPath, pending.id)), 'kaydedilmemiş formun yeni fotoğrafı korunur');
+    assert.equal(f.service.emptyTrash().entries, 1);
+    assert.deepEqual(f.service.snapshot().entries.map(e => e.id), [kept.id]);
+    assert.equal(f.service.cleanupAssets(24 * 3600 * 1000, Date.now() + 2 * 24 * 3600 * 1000).files, 1);
+    assert.ok(!existsSync(join(f.service.assetPath, pending.id))); assert.ok(existsSync(join(f.service.assetPath, shared.id)));
+  } finally { f.close(); }
+});

@@ -57,7 +57,7 @@ export default function App() {
   const [historyId, setHistoryId] = useState<string | null>(null); const [inbox, setInbox] = useState(false);
   const [integrations, setIntegrations] = useState(false);
   const [toast, setToast] = useState<{ text: string; error: boolean } | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<Entry | null>(null); const [lightbox, setLightbox] = useState<Asset | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Entry | null>(null); const [purge, setPurge] = useState<Entry | 'all' | null>(null); const [lightbox, setLightbox] = useState<Asset | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const notify = useCallback((text: string, error = false) => setToast({ text, error }), []);
   const reload = useCallback(async () => { const data = await getAPI().snapshot(); setSnapshot(data); }, []);
@@ -157,6 +157,7 @@ export default function App() {
           {category && <span className="filter-chip"><Folder size={13}/>{category === '__none' ? 'Kategorisiz' : category}<button aria-label="Kategori filtresini kaldır" onClick={() => setCategory('')}><X size={11}/></button></span>}
           {tag && <span className="filter-chip"><Tag size={13}/>#{tag}<button aria-label="Etiket filtresini kaldır" onClick={() => setTag('')}><X size={11}/></button></span>}
           {query && <span className="filter-chip"><MagnifyingGlass size={13}/>“{query}”</span>}
+          {section === 'trash' && trashed > 0 && <button className="small danger empty-trash" onClick={() => setPurge('all')}><Trash size={15}/>Çöp kutusunu boşalt</button>}
           {filtersActive && <button className="clear-filter" onClick={() => { setQuery(''); setTag(''); setCategory(''); }}><FunnelSimple size={13}/>Filtreleri temizle</button>}
         </div>
         {loading ? <div className="empty"><Archive size={40}/><h2>Arşivin açılıyor…</h2></div> : !filtered.length ? <div className="empty">
@@ -182,7 +183,7 @@ export default function App() {
         <dl className="metadata"><div><dt><Folder size={15}/>Kategori</dt><dd>{current.category ? <button className="meta-link" onClick={() => { setCategory(current.category); setSelected(null); }}>{current.category}</button> : 'Kategorisiz'}</dd></div><div><dt><Clock size={15}/>Oluşturulma</dt><dd>{dateTime(current.createdAt)}</dd></div><div><dt><PencilSimple size={15}/>Düzenlenme</dt><dd>{dateTime(current.updatedAt)}</dd></div></dl>
         {current.tags.length > 0 && <div className="detail-tags">{current.tags.map(t => <button key={t} title="Bu etiketle filtrele" onClick={() => { setTag(t); setSelected(null); }}>#{t}</button>)}</div>}
       </div>
-      <div className="detail-actions">{current.deletedAt ? <button className="primary" onClick={() => run(() => getAPI().trash(current.id, true), 'Kayıt geri alındı.')}><ArrowCounterClockwise size={18}/>Kaydı geri al</button> : <>
+      <div className="detail-actions">{current.deletedAt ? <><button className="primary" onClick={() => run(() => getAPI().trash(current.id, true), 'Kayıt geri alındı.')}><ArrowCounterClockwise size={18}/>Kaydı geri al</button><button className="danger icon-button bordered" aria-label="Kaydı kalıcı olarak sil" title="Kalıcı olarak sil" onClick={() => setPurge(current)}><Trash size={19}/></button></> : <>
         {current.kind === 'link' ? <button className="primary" onClick={() => run(() => getAPI().openUrl(current.url))}><ArrowSquareOut size={18}/>Bağlantıyı aç</button> : current.kind !== 'photo' && <button className="primary" onClick={() => copy(copyText(current))}><Copy size={18}/>{current.kind === 'command' ? 'Komutu kopyala' : 'Kopyala'}</button>}
         <button className={current.kind === 'photo' ? 'primary' : ''} onClick={() => setEditor(current)}><PencilSimple size={18}/>Düzenle</button>
         <button className="danger icon-button bordered" aria-label="Kaydı sil" title="Çöp kutusuna taşı" onClick={() => setConfirmDelete(current)}><Trash size={19}/></button>
@@ -201,6 +202,7 @@ export default function App() {
     {showSettings && <SettingsPanel reset={async () => { setSelected(null); setCategory(''); setTag(''); setQuery(''); setSection('all'); setTheme((await getAPI().settings()).theme); await reload(); }} close={() => setShowSettings(false)} changed={reload} notify={notify} transfer={mode => { setShowSettings(false); setTransfer(mode); }}/>}
     {transfer && <TransferPanel mode={transfer} snapshot={snapshot} initialCategory={category} close={() => setTransfer(null)} changed={reload} notify={notify}/>}
     {confirmDelete && <Modal title="Kaydı çöp kutusuna taşı" close={() => setConfirmDelete(null)}><div className="modal-body"><p><strong>{confirmDelete.title}</strong> çöp kutusuna taşınacak. Daha sonra Çöp kutusu bölümünden geri alabilirsin.</p></div><div className="modal-actions"><button onClick={() => setConfirmDelete(null)}>Vazgeç</button><button className="danger-solid" onClick={() => run(async () => { await getAPI().trash(confirmDelete.id); setConfirmDelete(null); setSelected(null); }, 'Kayıt çöp kutusuna taşındı.')}><Trash size={18}/>Çöp kutusuna taşı</button></div></Modal>}
+    {purge && <Modal title={purge === 'all' ? 'Çöp kutusunu boşalt' : 'Kaydı kalıcı olarak sil'} close={() => setPurge(null)}><div className="modal-body"><p>{purge === 'all' ? <><strong>{trashed} kayıt</strong> ve yalnızca bu kayıtlara ait fotoğraflar kalıcı olarak silinecek.</> : <><strong>{purge.title}</strong> ve yalnızca bu kayda ait fotoğraflar kalıcı olarak silinecek.</>}</p><p className="muted">Bu işlem geri alınamaz. Daha önce alınmış yedeklerdeki kopyalar korunur.</p></div><div className="modal-actions"><button onClick={() => setPurge(null)}>Vazgeç</button><button className="danger-solid" onClick={() => run(async () => { const result = await getAPI().emptyTrash(purge === 'all' ? undefined : purge.id); setPurge(null); setSelected(null); notify(`${result.entries} kayıt kalıcı olarak silindi${result.files ? `, ${result.files} dosya temizlendi (${size(result.bytes)})` : ''}.`); })}><Trash size={18}/>{purge === 'all' ? 'Çöp kutusunu boşalt' : 'Kalıcı olarak sil'}</button></div></Modal>}
     {lightbox && <Modal title={lightbox.name} close={() => setLightbox(null)} wide><Photo asset={lightbox} className="lightbox-image"/></Modal>}
     {toast && <Notification {...toast} close={() => setToast(null)}/>}
   </div>;

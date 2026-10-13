@@ -49,7 +49,8 @@ export interface ArchivePort {
   restoreRevision(id: string, revisionId: string): Promise<Entry>;
 }
 export interface AssetPort { addPhotos(): Promise<Asset[]>; image(id: string): Promise<string> }
-export interface DesktopAPI { deleteAllData(confirmation: string):Promise<void>; captureClipboard():Promise<Entry>; integrationFolder():Promise<void>; integrationWelcome():Promise<boolean>; onCaptured(callback:(value:{id:string;title:string})=>void):()=>void }
+export interface CleanupResult { entries?: number; files: number; bytes: number }
+export interface DesktopAPI { deleteAllData(confirmation: string):Promise<void>; emptyTrash(id?: string):Promise<CleanupResult & { entries: number }>; cleanupAssets():Promise<CleanupResult>; captureClipboard():Promise<Entry>; integrationFolder():Promise<void>; integrationWelcome():Promise<boolean>; onCaptured(callback:(value:{id:string;title:string})=>void):()=>void }
 export interface BackupPort { exportArchive(scope?: TransferScope): Promise<boolean>; importArchive(mode: 'merge' | 'replace', scope?: TransferScope): Promise<number | null>; backup(): Promise<void>; backups(): Promise<BackupInfo[]>; restoreBackup(name: string): Promise<number>; settings(): Promise<Settings>; setAutoBackup(enabled: boolean): Promise<void>; setTheme(theme: Theme): Promise<void> }
 export interface DesktopAPI extends ArchivePort, AssetPort, BackupPort { copy(text: string): Promise<void>; openUrl(url: string): Promise<void>; openFolder(kind: 'data' | 'backup'): Promise<void>; setBackupPeriod(period: BackupPeriod): Promise<void>; previewUrl(url: string): Promise<WebPreview>; checkLinks(id?: string): Promise<{ checked: number; broken: number }>; setLinkChecker(enabled: boolean): Promise<void>; testNotification(): Promise<void>; readNotice(id: string, noticeId: string): Promise<void> }
 // Future HTTP adapters implement ArchivePort/AssetPort. Sync transport remains optional.

@@ -1,6 +1,6 @@
 {
   "name": "dubbitig",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Komutların, bağlantıların, notların ve fotoğrafların için kişisel arşiv.",
   "author": "DubBitig",
   "main": "dist-electron/electron/main.js",
@@ -17,7 +17,8 @@
     "dist:portable": "npm run build:integrations && npm run build && electron-builder --win portable",
     "test:capture": "node tests/capture-desktop.mjs",
     "test:features": "node tests/features-15.mjs",
-    "test:tray-transfer": "node tests/tray-transfer.mjs"
+    "test:tray-transfer": "node tests/tray-transfer.mjs",
+    "screenshots": "node scripts/readme-screenshots.mjs"
   },
   "keywords": [],
   "type": "module",

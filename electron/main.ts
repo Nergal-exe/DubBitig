@@ -53,6 +53,8 @@ else {
     });
     handler('deleteAllData', confirmation => { service.deleteAllData(z.string().parse(confirmation)); nativeTheme.themeSource = service.settings().theme; });
     handler('snapshot', () => service.snapshot());
+    handler('emptyTrash', id => service.emptyTrash(id === undefined ? undefined : z.string().parse(id)));
+    handler('cleanupAssets', () => service.cleanupAssets());
     handler('save', (draft, id) => service.save(draft, id));
     handler('trash', (id, restore) => service.trash(id, z.boolean().optional().parse(restore)));
     handler('category', (action, name, next) => service.category(action, name, next));
@@ -176,6 +178,7 @@ else {
       if (service.settings().linkChecker) void service.checkLinks(undefined, undefined, true).catch(() => {});
     };
     tick(); timer = setInterval(tick, 60 * 1000);
+    try { service.cleanupAssets(); } catch { /* Leftover files are retried on the next start. */ }
   }).catch(error => { dialog.showErrorBox('DubBitig başlatılamadı', String(error)); app.quit(); });
   app.on('window-all-closed', () => app.quit());
   app.on('before-quit', () => { quitting = true; tray?.destroy(); tray = undefined; clearInterval(timer);clearInterval(inboxTimer);globalShortcut.unregisterAll(); if (service) { service.autoBackup(); service.repo.close(); service = undefined!; } });

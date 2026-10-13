@@ -133,6 +133,29 @@ export class ArchiveService {
     const entry = this.repo.get(z.string().uuid().parse(id)); if (!entry) throw new Error('Kayıt bulunamadı.');
     const now = new Date().toISOString(); this.repo.put({ ...entry, deletedAt: restore ? null : now, updatedAt: now, revision: entry.revision + 1 });
   }
+  // Permanently removes trashed entries (all, or one) and the photo files nothing references any more.
+  emptyTrash(id?: string) {
+    if (id !== undefined) z.string().uuid().parse(id);
+    const snapshot = this.snapshot();
+    const removed = snapshot.entries.filter(e => e.deletedAt && (id === undefined || e.id === id));
+    if (id !== undefined && !removed.length) throw new Error('Kayıt çöp kutusunda bulunamadı.');
+    if (removed.length) { snapshot.entries = snapshot.entries.filter(e => !removed.includes(e)); this.repo.replace(snapshot); }
+    const swept = this.cleanupAssets(undefined, Date.now(), new Set(removed.flatMap(e => entryAssets(e).map(a => a.id))));
+    return { entries: removed.length, ...swept };
+  }
+  // Files younger than minAge may belong to a form that has not been saved yet.
+  cleanupAssets(minAge = 24 * 60 * 60 * 1000, now = Date.now(), released = new Set<string>()) {
+    const used = new Set(this.snapshot().entries.flatMap(e => entryAssets(e).map(a => a.id)));
+    let files = 0; let bytes = 0;
+    for (const name of readdirSync(this.assetPath)) {
+      const id = name.replace(/\.tmp$/, '');
+      if (!/^[0-9a-f-]{36}$/i.test(id) || used.has(id) && name === id) continue;
+      const path = join(this.assetPath, name); const stat = statSync(path);
+      if (!stat.isFile() || !released.has(id) && now - stat.mtimeMs < minAge) continue;
+      unlinkSync(path); files++; bytes += stat.size;
+    }
+    return { files, bytes };
+  }
   category(action: 'add' | 'rename' | 'delete', name: string, next?: string) {
     z.enum(['add', 'rename', 'delete']).parse(action);
     name = z.string().trim().min(1).max(80).parse(name);

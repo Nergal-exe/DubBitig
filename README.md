@@ -1,4 +1,4 @@
-# DubBitig 1.6
+# DubBitig 1.7
 
 Komut, program, bağlantı, Markdown notu ve fotoğraflar için Türkçe kişisel arşiv. DubBitig adı Sümerce Dub (Tablet) + Eski Türkçe Bitig (Yazı) birleşimidir.
 
@@ -10,15 +10,15 @@ Komut, program, bağlantı, Markdown notu ve fotoğraflar için Türkçe kişise
 
 ### Ana ekran
 
-Kayıt türleri, arama, sıralama ve kategori/etiket yönetimine erişim sunan koyu temalı arşiv ekranı.
+Bölümlere ayrılmış sol menü, sabit arama ve filtre çubuğu, kayıt kartları ve bağlama göre eylem sunan ayrıntı paneli.
 
-![DubBitig ana ekranı: sol menü, arama alanı ve yeni kayıt oluşturma](docs/screenshots/ana-ekran.png)
+![DubBitig ana ekranı: sol menü, arama ve filtreler, kayıt kartları ve ayrıntı paneli](docs/screenshots/ana-ekran.png)
 
 ### Yeni kayıt ve Markdown düzenleyici
 
-Komut, program, bağlantı, not veya fotoğraf kaydı oluşturma; Markdown biçimlendirme ve önizleme seçenekleri.
+Komut, program, bağlantı, not veya fotoğraf kaydı oluşturma; Markdown biçimlendirme, önizleme ve hızlı hatırlatma seçenekleri.
 
-![Bağlantı kaydı oluşturma formu ve Markdown düzenleyici](docs/screenshots/yeni-kayit.png)
+![Not kaydı oluşturma formu ve Markdown düzenleyici](docs/screenshots/yeni-kayit.png)
 
 ### Yedekleme
 
@@ -34,13 +34,13 @@ Bağlantı denetimi, bildirim testi ve sistem tepsisinde çalışma hakkında bi
 
 ### Veri yönetimi
 
-Veri klasörüne erişim, içeri/dışarı aktarma, dosyadan geri yükleme ve bütün verileri silme seçenekleri.
+Veri klasörüne erişim, içeri/dışarı aktarma, dosyadan geri yükleme, kullanılmayan dosyaları temizleme ve bütün verileri silme seçenekleri.
 
 ![Veri konumu, arşiv aktarımı ve bütün verileri silme bölümü](docs/screenshots/veri-yonetimi.png)
 
 ## Kurulum ve veri konumu
 
-`release-dubbitig/DubBitig-1.6.0-Setup.exe` dosyasını çalıştırın. Kurulum yönetici izni ister; varsayılan uygulama konumu `C:\Program Files\DubBitig` olur. Eski sürümü kurulumdan önce kapatın. Setup önceki kullanıcı kurulumunu yükseltir; arşivi silmez. `DubBitig-Baslat.cmd` önce Program Files içindeki sürümü açar.
+`release-dubbitig/DubBitig-1.7.0-Setup.exe` dosyasını çalıştırın. Kurulum yönetici izni ister; varsayılan uygulama konumu `C:\Program Files\DubBitig` olur. Eski sürümü kurulumdan önce kapatın. Setup önceki kullanıcı kurulumunu yükseltir; arşivi silmez. `DubBitig-Baslat.cmd` önce Program Files içindeki sürümü açar.
 
 Veriler kullanıcıya özel `%APPDATA%\DubBitig` klasöründedir. Önceki `%APPDATA%\sakli` arşivi ilk açılışta fotoğrafları, ayarları ve yedekleriyle taşınır. Yeni konumda arşiv varsa üzerine yazılmaz. Chrome önceden yeni gelen kutusu oluşturduysa aşamalı taşıma yapılır; kesilen işlem sonraki açılışta tamamlanır. Çakışmada veriler korunarak hata gösterilir.
 
@@ -53,10 +53,11 @@ Ayarlar → Veriler bölümünde gerçek konumu görebilir ve klasörü açabili
 
 ## Kullanım
 
-- Yeni kayıt: **Ctrl+N**. Arama: **Ctrl+K**. Başlık, içerik, açıklama, bağlantı, kategori, etiket ve fotoğraf adı aranır; OCR yoktur.
+- Yeni kayıt: **Ctrl+N**. Arama: **Ctrl+K** veya **/**. Kayıt formunda kaydetme: **Ctrl+S**. Ayrıntı panelini kapatma: **Esc**. Başlık, içerik, açıklama, bağlantı, kategori, etiket ve fotoğraf adı aranır; OCR yoktur.
 - Notlarda Markdown başlıkları, kalın/italik, listeler, tablolar, bağlantılar ve kod blokları kullanılır. Düzenle / Önizleme sekmeleri bulunur. HTML çalıştırılmaz; harici Markdown görselleri otomatik indirilmez, fotoğraf olarak eklenebilir.
 - Komutlarda otomatik veya seçili dilde sözdizimi vurgulaması vardır. PowerShell, Bash, CMD, JavaScript, TypeScript, Python, JSON, SQL, YAML, HTML/XML, CSS ve C# desteklenir. Komutlar çalıştırılmaz; özgün metin tek tıkla kopyalanır.
-- Kategoriler yalnızca **Kategorileri yönet** içinde listelenir. Kayıtları göster düğmesi o kategoriyi filtreler. Kategori/etiket kaldırmak kayıtları silmez.
+- Kategoriler sol menüde listelenmez; **Kategorileri yönet** içinden yönetilir. Arama çubuğunun yanındaki kategori ve etiket filtreleri aramayla birlikte kullanılabilir; etkin filtreler tek tek kaldırılabilir. Kategori/etiket kaldırmak kayıtları silmez.
+- Ayrıntı panelinde kayıt türüne göre ana eylem bulunur: komutta **Komutu kopyala**, bağlantıda **Bağlantıyı aç**. Kart/liste görünümü tercihi hatırlanır.
 - Açık/koyu tema sol alttan seçilir. Arayüz React, Tailwind CSS ve shadcn/ui bileşenleri kullanır.
 - Saatin yanındaki simge: aç, pencereyi gizle, panodakini kaydet, çıkış. Gizlenen pencerenin hatırlatıcıları çalışmaya devam eder. Pencerenin X düğmesi uygulamayı kapatmaz, sistem tepsisine gizler. Tamamen kapatmak için simgeye sağ tıklayıp Çıkış seçin. Uygulamayı yeniden açmak mevcut pencereyi gösterir. Windows açılışında otomatik başlatma etkin değildir.
 - **Program Bilgi** sekmesinde uygulamanın amacı, özellikleri ve adının anlamı bulunur.
@@ -67,6 +68,8 @@ Ayarlar → Veriler bölümünde gerçek konumu görebilir ve klasörü açabili
 Ayarlar → Yedekleme: 30 dakika, günlük, haftalık veya aylık aralık seçilebilir. Değişiklik varsa yedek alınır; uygulama kapalıyken kaçırılan kontrol sonraki açılışta yapılır. Son 14 otomatik yedek tutulur; elle alınanlar korunur.
 
 Dışa aktarmada Tümünü dışa aktar, Kategorileri dışa aktar ve Kayıt türlerini dışa aktar seçenekleri vardır. Tek bir kategori/tür seçerek ayrı dosyaya, birden fazla seçerek tek dosyaya aktarabilirsiniz. Kayıt türleri: komut, program, bağlantı, not, fotoğraf. Kategori/tür aktarımları yalnızca aktif kayıtları ve bunlara ait fotoğrafları/geçmişi içerir. İçeri aktarma bu dosyaları özgün kategori ve türlerini koruyarak birleştirir. İstenirse Hedef kategoriye yeni kopyalar ekle kullanılabilir. Tam arşiv çöp kutusu ve geçmişi de içerir. Tek kategoriye içe aktarma yeni kopyalar oluşturur. Kategori veya kayıt türü dosyası bütün arşivin yerine geri yüklenemez. Tam geri yükleme önce güvenlik yedeği alır. `.sakli` ZIP arşiv sınırı 512 MB; yedekler şifrelenmez. Başka diske kopyalamak disk arızasına karşı koruma sağlar.
+
+Silinen kayıtlar önce **Çöp kutusu**na taşınır. Çöp kutusunda **Çöp kutusunu boşalt** ile tümü, kayıt ayrıntılarındaki kalıcı silme düğmesiyle tek kayıt kalıcı olarak silinir; yalnızca bu kayıtlara ait fotoğraflar da diskten kaldırılır. Daha önce alınmış yedeklerdeki kopyalar korunur. Hiçbir kayda ait olmayan, 1 günden eski fotoğraf ve önizleme dosyaları her açılışta ve **Ayarlar → Veriler → Kullanılmayan dosyaları temizle** ile silinir.
 
 **Ayarlar → Veriler → Bütün verileri sil**, `BÜTÜN VERİLERİ SİL` yazılı onayıyla kayıtları, çöp kutusunu, geçmişi, kategorileri, etiketleri, hatırlatıcıları, fotoğrafları, ayarları ve veri klasöründeki yerel yedekleri kalıcı olarak temizler. Veritabanı boş sayfalardaki eski içeriği bırakmadan yeniden oluşturulur. Başka konuma dışarı aktarılan dosyalar ve kaynak fotoğraflar silinmez. Silme sırasında devam eden web önizlemeleri arşivi yeniden dolduramaz.
 
@@ -94,9 +97,10 @@ npm.cmd run test:features
 npm.cmd run test:tray-transfer
 npm.cmd run dist
 npm.cmd run test:capture
+npm.cmd run screenshots
 ```
 
-`test:capture` için paketlenmiş `release-dubbitig/win-unpacked` gerekir. `SAKLI_TEST_EXE` ile masaüstü/özellik testleri paketlenmiş EXE'ye yönlendirilir. `tests/chrome-test.ps1` ayrı Chrome profiliyle gerçek eklenti aktarımını sınar. Testler gerçek kullanıcı arşivi yerine geçici klasörler kullanır. Derleme için Node.js ve Windows .NET Framework C# derleyicisi gerekir. Geliştirme arayüzü `npm run dev`, Electron için `SAKLI_DEV=1` ile açılabilir.
+`screenshots` README görsellerini örnek verilerle yeniden üretir (önce `build` gerekir). `test:capture` için paketlenmiş `release-dubbitig/win-unpacked` gerekir. `SAKLI_TEST_EXE` ile masaüstü/özellik testleri paketlenmiş EXE'ye yönlendirilir. `tests/chrome-test.ps1` ayrı Chrome profiliyle gerçek eklenti aktarımını sınar. Testler gerçek kullanıcı arşivi yerine geçici klasörler kullanır. Derleme için Node.js ve Windows .NET Framework C# derleyicisi gerekir. Geliştirme arayüzü `npm run dev`, Electron için `SAKLI_DEV=1` ile açılabilir.
 
 ## Mimari
 
