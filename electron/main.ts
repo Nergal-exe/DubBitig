@@ -53,6 +53,8 @@ else {
     });
     handler('deleteAllData', confirmation => { service.deleteAllData(z.string().parse(confirmation)); nativeTheme.themeSource = service.settings().theme; });
     handler('snapshot', () => service.snapshot());
+    handler('emptyTrash', id => service.emptyTrash(id === undefined ? undefined : z.string().parse(id)));
+    handler('cleanupAssets', () => service.cleanupAssets());
     handler('save', (draft, id) => service.save(draft, id));
     handler('trash', (id, restore) => service.trash(id, z.boolean().optional().parse(restore)));
     handler('category', (action, name, next) => service.category(action, name, next));
@@ -63,11 +65,9 @@ else {
     handler('setBackupPeriod', period => service.setBackupPeriod(period));
     handler('setLinkChecker', enabled => repo.setting('linkChecker', String(z.boolean().parse(enabled))));
     handler('checkLinks', id => service.checkLinks(id));
-    let previewBusy = false;
-    const fetchPreview = async (value: string) => {
-      if (previewBusy) throw new Error('Önceki site önizlemesi hazırlanıyor. Biraz sonra tekrar dene.');
-      previewBusy = true;
-      try { return await service.previewUrl(z.string().max(4000).parse(value), bytes => {
+    // Requests run one at a time; a new one waits instead of failing while the previous URL is still loading.
+    let previewQueue: Promise<unknown> = Promise.resolve();
+    const previewOnce = (value: string) => service.previewUrl(z.string().max(4000).parse(value), bytes => {
         let img = nativeImage.createFromBuffer(bytes);
         // Windows decodes ICO files from paths, not from in-memory buffers.
         if (img.isEmpty() && bytes.length >= 6 && bytes.readUInt32LE(0) === 0x00010000) {
@@ -77,8 +77,10 @@ else {
         }
         if (img.isEmpty()) return null;
         const dimensions = img.getSize(); if (dimensions.width > 1600 || dimensions.height > 1600) img = img.resize({ width: Math.round(dimensions.width * Math.min(1600 / dimensions.width, 1600 / dimensions.height)), height: Math.round(dimensions.height * Math.min(1600 / dimensions.width, 1600 / dimensions.height)) }); return img.toPNG();
-      }); }
-      finally { previewBusy = false; }
+      });
+    const fetchPreview = (value: string) => {
+      const job = previewQueue.catch(() => {}).then(() => previewOnce(value));
+      previewQueue = job; return job;
     };
     handler('previewUrl', fetchPreview);
     const showNotification = (title: string, body: string) => {
@@ -176,6 +178,7 @@ else {
       if (service.settings().linkChecker) void service.checkLinks(undefined, undefined, true).catch(() => {});
     };
     tick(); timer = setInterval(tick, 60 * 1000);
+    try { service.cleanupAssets(); } catch { /* Leftover files are retried on the next start. */ }
   }).catch(error => { dialog.showErrorBox('DubBitig başlatılamadı', String(error)); app.quit(); });
   app.on('window-all-closed', () => app.quit());
   app.on('before-quit', () => { quitting = true; tray?.destroy(); tray = undefined; clearInterval(timer);clearInterval(inboxTimer);globalShortcut.unregisterAll(); if (service) { service.autoBackup(); service.repo.close(); service = undefined!; } });

@@ -9,7 +9,7 @@ import { SQLiteRepository } from '../electron/repository';
 import { ArchiveService } from '../electron/service';
 import type { Draft } from '../src/shared/model';
 import { advanceDate, nextReminder } from '../electron/schedule';
-import { parseMetadata, checkUrl, publicUrl, isPublicAddress, type WebFetcher } from '../electron/web';
+import { parseMetadata, checkUrl, publicUrl, isPublicAddress, decodeHtml, type WebFetcher } from '../electron/web';
 import { randomUUID } from 'node:crypto';
 import { captureDraft, captureFile, clipboardRequest, drainInbox, saveCapture } from '../electron/capture';
 const draft = (title = 'Not'): Draft => ({ title, kind: 'note', description: 'Açıklama', content: 'İstanbul için bir not', category: 'Günlük', tags: ['iş'], url: '', favorite: false, assets: [] });
@@ -245,4 +245,41 @@ test('kullanılmayan etiketler yedeklenir; eski arşivlerin etiketleri kayıtlar
     const files = unzipSync(a.service.exportBytes()); const legacy = JSON.parse(strFromU8(files['manifest.json'])); delete legacy.tags; files['manifest.json'] = strToU8(JSON.stringify(legacy));
     b.service.importBytes(zipSync(files), 'replace'); assert.deepEqual(b.service.snapshot().tags, ['iş']);
   } finally { a.close(); b.close(); }
+});
+test('hatırlatma çaldıktan sonra eski formdan kaydetmek aynı hatırlatmayı yeniden kurmaz', async () => {
+  const f = await fixture(); try {
+    const at = new Date(2027, 0, 10, 9).toISOString();
+    const e = f.service.save({ ...draft(), reminder: { at, repeat: 'weekly', enabled: true } });
+    const stale = f.repo.get(e.id)!;
+    f.service.processReminders(() => {}, new Date(2027, 0, 10, 9, 1));
+    const advanced = f.repo.get(e.id)!.reminder!.at; assert.notEqual(advanced, at);
+    f.service.save({ ...stale, favorite: true }, e.id);
+    assert.equal(f.repo.get(e.id)!.reminder!.at, advanced); assert.equal(f.repo.get(e.id)!.favorite, true);
+    const later = new Date(2027, 5, 1, 9).toISOString();
+    f.service.save({ ...stale, reminder: { at: later, repeat: 'once', enabled: true } }, e.id);
+    assert.equal(f.repo.get(e.id)!.reminder!.at, later);
+  } finally { f.close(); }
+});
+test('site önizlemesi bildirilen karakter kümesiyle çözülür', () => {
+  const html = Buffer.from([...Buffer.from('<title>'), 0xdd, 0x73, 0x74, 0x61, 0x6e, 0x62, 0x75, 0x6c, 0x20, 0xfe, 0x65, 0x68, 0x69, 0x72, ...Buffer.from('</title>')]);
+  assert.match(decodeHtml(html, 'text/html; charset=windows-1254'), /İstanbul şehir/);
+  assert.match(decodeHtml(Buffer.from('<meta charset="utf-8"><title>Çay</title>')), /Çay/);
+});
+test('çöp kutusunu boşaltmak yalnızca silinen kayıtları ve artık kullanılmayan fotoğrafları kalıcı siler', async () => {
+  const f = await fixture(); try {
+    const path = join(f.dir, 'kaynak.png'); writeFileSync(path, pngBytes);
+    const shared = f.service.addPhoto(path), own = f.service.addPhoto(path), pending = f.service.addPhoto(path);
+    const kept = f.service.save({ ...draft('Kalan'), assets: [shared] });
+    const gone = f.service.save({ ...draft('Silinecek'), assets: [shared, own] }); f.service.trash(gone.id);
+    const other = f.service.save(draft('Diğer çöp')); f.service.trash(other.id);
+    assert.throws(() => f.service.emptyTrash(kept.id), /bulunamadı/);
+    const one = f.service.emptyTrash(gone.id);
+    assert.equal(one.entries, 1); assert.equal(one.files, 1);
+    assert.ok(existsSync(join(f.service.assetPath, shared.id))); assert.ok(!existsSync(join(f.service.assetPath, own.id)));
+    assert.ok(existsSync(join(f.service.assetPath, pending.id)), 'kaydedilmemiş formun yeni fotoğrafı korunur');
+    assert.equal(f.service.emptyTrash().entries, 1);
+    assert.deepEqual(f.service.snapshot().entries.map(e => e.id), [kept.id]);
+    assert.equal(f.service.cleanupAssets(24 * 3600 * 1000, Date.now() + 2 * 24 * 3600 * 1000).files, 1);
+    assert.ok(!existsSync(join(f.service.assetPath, pending.id))); assert.ok(existsSync(join(f.service.assetPath, shared.id)));
+  } finally { f.close(); }
 });
