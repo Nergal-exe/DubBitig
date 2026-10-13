@@ -39,6 +39,11 @@ export const fetchPublic: WebFetcher = async (value, options = {}) => {
   }
   throw new Error('Çok fazla yönlendirme.');
 };
+// Older Turkish sites still serve windows-1254 / ISO-8859-9; decoding them as UTF-8 garbles titles.
+export function decodeHtml(bytes: Buffer, contentType = '') {
+  const declared = /charset=["']?([\w-]+)/i.exec(contentType)?.[1] ?? /<meta[^>]+charset=["']?([\w-]+)/i.exec(bytes.subarray(0, 4096).toString('latin1'))?.[1];
+  try { return new TextDecoder(declared?.toLowerCase() ?? 'utf-8').decode(bytes); } catch { return bytes.toString('utf8'); }
+}
 export function parseMetadata(html: string, url: string) {
   const $ = load(html);
   const meta = (key: string) => $(`meta[property="${key}"],meta[name="${key}"]`).first().attr('content')?.trim() ?? '';

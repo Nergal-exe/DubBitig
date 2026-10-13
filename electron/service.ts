@@ -7,7 +7,7 @@ import { z } from 'zod';
 import { archiveSchema, draftSchema, transferScopeSchema, backupPeriods, type TransferScope, type Asset, type Draft, type Entry, type Archive, type Settings, type WebPreview, type BackupPeriod } from '../src/shared/model.js';
 import { atomicWrite, type Repository } from './repository.js';
 import { advanceDate, nextReminder } from './schedule.js';
-import { checkUrl, fetchPublic, parseMetadata, type WebFetcher } from './web.js';
+import { checkUrl, decodeHtml, fetchPublic, parseMetadata, type WebFetcher } from './web.js';
 
 export function draftAssets(draft: Draft) { return [...draft.assets, ...[draft.preview?.favicon, draft.preview?.image].filter((a): a is Asset => !!a)]; }
 export function entryAssets(entry: Entry) { return [...draftAssets(entry), ...(entry.history ?? []).flatMap(h => draftAssets(h.draft))]; }
@@ -50,6 +50,8 @@ export class ArchiveService {
     if (id && !old) throw new Error('Kayıt bulunamadı.');
     if (old?.deletedAt) throw new Error('Önce kaydı çöp kutusundan geri al.');
     if (draft.preview?.url !== draft.url) draft.preview = null;
+    // A form opened before a reminder fired still carries the old time; never re-arm an occurrence already notified.
+    if (draft.reminder && old?.reminder && draft.reminder.at !== old.reminder.at && old.notices?.some(n => n.kind === 'reminder' && n.at === draft.reminder!.at)) draft.reminder = { ...draft.reminder, at: old.reminder.at, enabled: draft.reminder.enabled && old.reminder.enabled, anchorDay: old.reminder.anchorDay };
     if (draft.reminder && (!old?.reminder || draft.reminder.at !== old.reminder.at)) draft.reminder.anchorDay = new Date(draft.reminder.at).getDate();
     for (const asset of draftAssets(draft)) if (!existsSync(join(this.assetPath, asset.id))) throw new Error('Fotoğraf dosyası bulunamadı. Yeniden ekle.');
     const now = new Date().toISOString();
@@ -83,7 +85,7 @@ export class ArchiveService {
     const response = await fetcher(url);
     if (response.status < 200 || response.status >= 400) throw new Error(`Site önizlemesi alınamadı (HTTP ${response.status}). Bilgileri elle girebilirsin.`);
     if (!String(response.headers['content-type'] ?? '').includes('html')) throw new Error('Bu adres bir HTML sayfası değil.');
-    const meta = parseMetadata(response.bytes.toString('utf8'), response.url);
+    const meta = parseMetadata(decodeHtml(response.bytes, String(response.headers['content-type'] ?? '')), response.url);
     const storeImage = async (value: string, name: string): Promise<Asset | undefined> => {
       if (!value) return undefined;
       try { const r = await fetcher(value, { limit: 4 * 1024 * 1024 }); if (r.status !== 200 || generation !== this.generation) return undefined; const png = convertImage(r.bytes); if (!png || png.length > 4 * 1024 * 1024) return undefined; const asset: Asset = { id: randomUUID(), name, mime: 'image/png', size: png.length }; atomicWrite(join(this.assetPath, asset.id), png); return asset; } catch { return undefined; }
@@ -264,5 +266,5 @@ export class ArchiveService {
   private signature() { return createHash('sha256').update(JSON.stringify(this.snapshot())).digest('hex'); }
   backups() { return readdirSync(this.backupPath).filter(n => /^sakli-.*\.sakli$/.test(n)).map(name => { const stat = statSync(join(this.backupPath, name)); return { name, date: stat.mtime.toISOString(), size: stat.size }; }).sort((a, b) => b.date.localeCompare(a.date)); }
   restoreBackup(name: string) { if (!this.backups().some(b => b.name === name)) throw new Error('Yedek bulunamadı.'); return this.importBytes(readFileSync(join(this.backupPath, name)), 'replace'); }
-  settings(): Settings { const last = this.repo.setting('lastAutoBackup') ?? this.repo.setting('lastBackup'); return { theme: this.repo.setting('theme') === 'light' ? 'light' : 'dark', autoBackup: this.repo.setting('autoBackup') !== 'false', backupPeriod: this.backupPeriod(), nextBackup: last ? advanceDate(last, this.backupPeriod()) : null, linkChecker: this.repo.setting('linkChecker') !== 'false', lastBackup: this.repo.setting('lastBackup') ?? null, backupError: this.backupError, dataPath: this.dataPath, backupPath: this.backupPath }; }
+  settings(): Settings { const last = this.repo.setting('lastAutoBackup') ?? this.repo.setting('lastBackup'); const next = last ? advanceDate(last, this.backupPeriod()) : null; return { theme: this.repo.setting('theme') === 'light' ? 'light' : 'dark', autoBackup: this.repo.setting('autoBackup') !== 'false', backupPeriod: this.backupPeriod(), nextBackup: next, backupDue: !!next && new Date(next) <= new Date(), linkChecker: this.repo.setting('linkChecker') !== 'false', lastBackup: this.repo.setting('lastBackup') ?? null, backupError: this.backupError, dataPath: this.dataPath, backupPath: this.backupPath }; }
 }

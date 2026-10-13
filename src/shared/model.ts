@@ -38,7 +38,7 @@ export const archiveSchema = z.object({ format: z.literal('sakli'), version: z.l
 export type Archive = z.infer<typeof archiveSchema>;
 export interface Snapshot { entries: Entry[]; categories: string[]; tags: string[] }
 export interface BackupInfo { name: string; date: string; size: number }
-export interface Settings { version?: string; theme: Theme; autoBackup: boolean; backupPeriod: BackupPeriod; nextBackup: string | null; linkChecker: boolean; lastBackup: string | null; backupError: string | null; dataPath: string; backupPath: string }
+export interface Settings { version?: string; theme: Theme; autoBackup: boolean; backupPeriod: BackupPeriod; nextBackup: string | null; backupDue?: boolean; linkChecker: boolean; lastBackup: string | null; backupError: string | null; dataPath: string; backupPath: string }
 export interface ArchivePort {
   snapshot(): Promise<Snapshot>;
   save(draft: Draft, id?: string): Promise<Entry>;
