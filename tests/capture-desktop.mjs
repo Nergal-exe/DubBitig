@@ -8,8 +8,10 @@ const exe=process.env.SAKLI_TEST_EXE || path.join(root,'release-dubbitig/win-unp
 const hostDir=path.join(path.dirname(exe),'resources/native-host');
 const manifest=JSON.parse(readFileSync(path.join(hostDir,'com.dubbitig.capture.json'),'utf8'));
 const env={...process.env,DUBBITIG_DATA_DIR:data,DUBBITIG_CAPTURE_EXE:exe};delete env.ELECTRON_RUN_AS_NODE;
-function native(request,origin=manifest.allowed_origins[0]) {return new Promise((resolve,reject)=>{
-  const child=spawn(path.join(hostDir,'DubBitig.NativeHost.exe'),[origin],{env,windowsHide:true});let chunks=[];let err='';let completed=false;
+// Chrome passes the origin; Firefox passes [manifest path, add-on id]. 'node' runs the Linux host script instead of the .exe.
+function native(request,origin=manifest.allowed_origins[0],host='exe') {return new Promise((resolve,reject)=>{
+  const args=Array.isArray(origin)?origin:[origin];
+  const child=host==='node'?spawn(process.execPath,[path.join(hostDir,'native-host.cjs'),...args],{env,windowsHide:true}):spawn(path.join(hostDir,'DubBitig.NativeHost.exe'),args,{env,windowsHide:true});let chunks=[];let err='';let completed=false;
   child.stdout.on('data',part=>{chunks.push(part);const b=Buffer.concat(chunks);if(b.length>=4 && b.length>=4+b.readUInt32LE(0)){completed=true;resolve(JSON.parse(b.subarray(4,4+b.readUInt32LE(0)).toString('utf8')));child.stdout.destroy();child.stderr.destroy();child.unref();}});child.stderr.on('data',b=>err+=b);child.on('error',reject);
   child.on('close',()=>{if(!completed)reject(new Error(err || 'Native host did not reply'));});
   const b=Buffer.from(JSON.stringify(request));const header=Buffer.alloc(4);header.writeUInt32LE(b.length);child.stdin.end(Buffer.concat([header,b]));
@@ -25,6 +27,19 @@ try {
   let snapshot=await page.evaluate(()=>window.sakli.snapshot());expect(snapshot.entries).toHaveLength(1);expect(snapshot.entries[0].content).toBe(text);
   expect((await native(request)).ok).toBe(true);expect((await page.evaluate(()=>window.sakli.snapshot())).entries).toHaveLength(1);
   expect((await native({...request,id:randomUUID()},'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/')).ok).toBe(false);
+  // Firefox: the add-on id from the Firefox manifest is accepted, any other id is refused.
+  const firefoxManifest=path.join(hostDir,'com.dubbitig.capture.firefox.json');const firefoxId=JSON.parse(readFileSync(firefoxManifest,'utf8')).allowed_extensions[0];
+  const fromFirefox={id:randomUUID(),type:'save',kind:'note',text:'Firefox’tan Türkçe not',title:'',url:'',sourceUrl:''};
+  expect((await native(fromFirefox,[firefoxManifest,firefoxId])).ok).toBe(true);
+  expect((await native({...fromFirefox,id:randomUUID(),text:'izinsiz'},[firefoxManifest,'baska@eklenti'])).ok).toBe(false);
+  // The same command from another request reveals the existing record instead of duplicating it.
+  expect((await native({...request,id:randomUUID()})).ok).toBe(true);
+  // The Node host used on Linux follows the same protocol and checks.
+  const viaNode={id:randomUUID(),type:'save',kind:'note',text:'Linux köprüsünden not',title:'',url:'',sourceUrl:''};
+  expect((await native(viaNode,[firefoxManifest,firefoxId],'node')).ok).toBe(true);
+  expect((await native({...viaNode,id:randomUUID()},'chrome-extension://aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/','node')).ok).toBe(false);
+  const notes=(await page.evaluate(()=>window.sakli.snapshot())).entries.map(e=>e.title);
+  expect(notes).toEqual(expect.arrayContaining(['Firefox’tan Türkçe not','Linux köprüsünden not']));expect(notes.filter(t=>t===text.split(String.fromCharCode(10))[0])).toHaveLength(1);
   expect((await native({...request,id:randomUUID(),kind:'link',text:'',url:'javascript:alert(1)'})).ok).toBe(false);
   await app.evaluate(async({clipboard})=>{await clipboard.writeText('Panodan Türkçe not');});
   await page.evaluate(()=>window.sakli.captureClipboard());await expect(page.locator('.detail-panel h2')).toHaveText('Panodan Türkçe not');
@@ -32,7 +47,7 @@ try {
   await new Promise((resolve,reject)=>{const p=spawn(exe,['--capture-file',file],{env,windowsHide:true,stdio:'ignore'});p.on('error',reject);p.on('exit',resolve);});
   await expect.poll(async()=> (await page.evaluate(()=>window.sakli.snapshot())).entries.map(e=>e.title),{timeout:15000}).toContain(path.basename(file));
   await expect(page.locator('.detail-panel h2')).toHaveText(path.basename(file));
-  snapshot=await page.evaluate(()=>window.sakli.snapshot());expect(snapshot.entries).toHaveLength(3);expect(snapshot.entries.find(e=>e.title===path.basename(file)).kind).toBe('command');
+  snapshot=await page.evaluate(()=>window.sakli.snapshot());expect(snapshot.entries).toHaveLength(5);expect(snapshot.entries.find(e=>e.title===path.basename(file)).kind).toBe('command');
   // Cold startup from native messaging is a separate path from second-instance delivery.
   await app.close();
   const cold={...request,id:randomUUID(),kind:'note',text:'Kapalı uygulamaya kayıt',title:'Soğuk başlangıç'};
@@ -40,7 +55,7 @@ try {
   // Inspect persistence without writing through a second repository instance.
   const {SQLiteRepository}=await import('../dist-electron/electron/repository.js');
   const repo=await SQLiteRepository.open(path.join(data,'sakli.sqlite'));expect(repo.get(cold.id).content).toBe(cold.text);repo.close();
-  console.log('PASS: native messaging, origin validation, Unicode, command safety, retry deduplication, clipboard, file capture, cold startup.');
+  console.log('PASS: native messaging (Chrome, Firefox, Linux Node host), origin validation, Unicode, command safety, retry deduplication, clipboard, file capture, cold startup.');
 } finally {
   try{await app.close();}catch{}
   // Close only the app process using this unique test data path (cold launch belongs to this test).

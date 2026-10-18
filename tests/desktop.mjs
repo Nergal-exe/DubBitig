@@ -26,16 +26,16 @@ try {
   await page.getByRole('textbox', { name: 'Açıklama' }).fill('PowerShell ile çalışan işlemleri bellek kullanımına göre göster.');
   await page.getByRole('textbox', { name: 'Komut' }).fill('Get-Process | Sort-Object WorkingSet -Descending');
   await page.getByRole('combobox', { name: 'Kategori', exact: true }).fill('Windows');
-  await page.getByRole('textbox', { name: 'Etiketler' }).fill('powershell, sistem');
+  await page.getByRole('combobox', { name: 'Etiketler' }).fill('powershell, sistem');
   await page.getByRole('button', { name: 'Kaydet', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Çalışan işlemleri listele' })).toBeVisible();
   await page.getByRole('button', { name: 'Çalışan işlemleri listele kopyala', exact: true }).click();
   const clipboard = await app.evaluate(({ clipboard }) => clipboard.readText());
   expect(clipboard).toBe('Get-Process | Sort-Object WorkingSet -Descending');
   await page.getByRole('button', { name: 'Çalışan işlemleri listele favorilere ekle' }).click();
-  await page.getByRole('textbox', { name: 'Arşivde ara' }).fill('calisan');
+  await page.getByRole('combobox', { name: 'Arşivde ara' }).fill('calisan');
   await expect(page.getByRole('heading', { name: 'Çalışan işlemleri listele' })).toBeVisible();
-  await page.getByRole('textbox', { name: 'Arşivde ara' }).fill('bulunmayan123');
+  await page.getByRole('combobox', { name: 'Arşivde ara' }).fill('bulunmayan123');
   await expect(page.getByRole('heading', { name: 'Eşleşen kayıt bulunamadı' })).toBeVisible();
   await page.getByRole('button', { name: 'Aramayı temizle' }).click();
 
@@ -50,7 +50,8 @@ try {
   writeFileSync(photoPath, Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=', 'base64'));
   await app.evaluate(({ dialog }, photoPath) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [photoPath] }); }, photoPath);
   await page.getByRole('button', { name: 'Yeni kayıt' }).click();
-  await page.getByRole('group', { name: 'Kayıt türü' }).getByRole('button', { name: 'Fotoğraf', exact: true }).click();
+  // Photos are attachments of any record type since 1.8; there is no separate photo type.
+  await expect(page.getByRole('group', { name: 'Kayıt türü' }).getByRole('button', { name: 'Fotoğraf', exact: true })).toHaveCount(0);
   await page.getByRole('textbox', { name: 'Başlık' }).fill('Fotoğraf testi');
   await page.getByRole('button', { name: 'Fotoğraf ekle', exact: true }).click();
   await expect(page.getByAltText('deneme.png')).toBeVisible();
@@ -149,6 +150,8 @@ try {
   await page.getByRole('button', { name: 'Kaydet', exact: true }).click();
   await page.getByRole('button', { name: 'Ayrıntıları kapat' }).click();
   await page.getByRole('button', { name: 'Ayarlar ve yedekler', exact: true }).click();
+  await expect(page.getByRole('tab', { name: 'Genel', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await page.getByRole('tab', { name: 'Yedekleme', exact: true }).click();
   await page.getByRole('button', { name: 'Şimdi yedekle', exact: true }).click();
   await page.getByRole('combobox', { name: 'Yedekleme sıklığı' }).selectOption('weekly');
   await expect(page.getByRole('combobox', { name: 'Yedekleme sıklığı' })).toHaveValue('weekly');

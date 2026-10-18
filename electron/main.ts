@@ -9,15 +9,20 @@ import { ArchiveService, MAX_ARCHIVE } from './service.js';
 import { transferScopeSchema } from '../src/shared/model.js';
 import { captureFile, clipboardRequest, saveCapture, drainInbox } from './capture.js';
 import { migrateDataLocation } from './data-location.js';
+import { registerLinuxBrowserHost } from './linux-integration.js';
+import { checkUpdate, loginSupported, openAtLogin, setOpenAtLogin, startedHidden } from './system.js';
 import type { Entry } from '../src/shared/model.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
+// Windows uses the .ico; Linux trays and windows need a PNG.
+const appIcon = join(here, '../../dist', process.platform === 'win32' ? 'qqwe.ico' : 'icon.png');
 let tray: Tray | undefined;
 let quitting = false;
 let service: ArchiveService;
 let window: BrowserWindow;
 let timer: ReturnType<typeof setInterval>;
 let inboxTimer: ReturnType<typeof setInterval>;
+let updateTimer: ReturnType<typeof setInterval> | undefined;
 let receiveArgs: ((args: string[]) => Promise<void>) | undefined;
 const pendingArgs: string[][] = [process.argv];
 app.setName('DubBitig');
@@ -41,9 +46,11 @@ else {
     const repo = await SQLiteRepository.open(join(app.getPath('userData'), 'sakli.sqlite'));
     service = new ArchiveService(repo, app.getPath('userData'));
     if (repo.setting('categoriesCleared13') !== 'true') repo.setting('categoriesCleared13', 'true');
+    try { registerLinuxBrowserHost(app.getPath('userData')); } catch { /* Browser capture stays unavailable; the archive itself is unaffected. */ }
+    try { service.migratePhotoKind(); } catch (error) { dialog.showErrorBox('Fotoğraf kayıtları taşınamadı', String(error)); }
     Menu.setApplicationMenu(null);
     nativeTheme.themeSource = service.settings().theme;
-    window = new BrowserWindow({ width: 1440, height: 940, minWidth: 920, minHeight: 650, title: 'DubBitig', icon: join(here, '../../dist/qqwe.ico'), backgroundColor: service.settings().theme === 'dark' ? '#171b23' : '#f3f4f6', show: false, webPreferences: { preload: join(here, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, spellcheck: false } });
+    window = new BrowserWindow({ width: 1440, height: 940, minWidth: 920, minHeight: 650, title: 'DubBitig', icon: appIcon, backgroundColor: service.settings().theme === 'dark' ? '#171b23' : '#f3f4f6', show: false, webPreferences: { preload: join(here, 'preload.cjs'), contextIsolation: true, nodeIntegration: false, sandbox: true, spellcheck: false } });
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     window.webContents.on('will-navigate', event => event.preventDefault());
     window.webContents.session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
@@ -85,12 +92,12 @@ else {
     handler('previewUrl', fetchPreview);
     const showNotification = (title: string, body: string) => {
       if (!Notification.isSupported()) throw new Error('Bu sistemde Windows bildirimi desteklenmiyor. Hatırlatıcıları uygulama içinden görebilirsin.');
-      const notification = new Notification({ title, body, icon: join(here, '../../dist/qqwe.ico') });
+      const notification = new Notification({ title, body, icon: appIcon });
       notification.on('click', () => { if (window.isMinimized()) window.restore(); window.show(); window.focus(); });
       notification.show();
     };
     handler('testNotification', () => showNotification('DubBitig', 'Hatırlatıcı bildirimleri hazır.'));
-    handler('integrationFolder', async () => { const error=await shell.openPath(app.isPackaged ? join(process.resourcesPath,'chrome-extension') : join(here,'../../chrome-extension'));if(error)throw new Error(error); });
+    handler('integrationFolder', async browser => { const folder=z.enum(['chrome','firefox']).optional().parse(browser)==='firefox'?'firefox-extension':'chrome-extension'; const error=await shell.openPath(app.isPackaged ? join(process.resourcesPath,folder) : join(here,'../..',folder));if(error)throw new Error(error); });
     handler('integrationWelcome',()=>{if(!app.isPackaged || process.env.SAKLI_DATA_DIR || process.env.DUBBITIG_DATA_DIR || process.env.PORTABLE_EXECUTABLE_FILE || repo.setting('integrationWelcome14')==='true')return false;repo.setting('integrationWelcome14','true');return true;});
     const onCaptured = (entry: Entry) => {
       window.webContents.send('sakli:captured', {id:entry.id,title:entry.title});
@@ -135,14 +142,18 @@ else {
       const r = await dialog.showMessageBox(window, { type: 'warning', title: 'Yedeği geri yükle', message: 'Mevcut arşiv bu yedekle değiştirilsin mi?', detail: 'Mevcut arşiv önce ayrı bir güvenlik yedeğine kaydedilir.', buttons: ['Vazgeç', 'Geri yükle'], defaultId: 0, cancelId: 0 });
       if (r.response !== 1) return -1; return service.restoreBackup(z.string().max(200).parse(name));
     });
-    handler('settings', () => ({ ...service.settings(), version: app.getVersion() }));
+    handler('settings', () => ({ ...service.settings(), version: app.getVersion(), openAtLogin: openAtLogin(), loginSupported: loginSupported() }));
+    handler('setBackupTime', time => service.setBackupTime(z.string().parse(time)));
+    handler('setCloseAction', action => service.setCloseAction(action));
+    handler('setOpenAtLogin', enabled => setOpenAtLogin(z.boolean().parse(enabled)));
+    handler('checkUpdate', force => checkUpdate(z.boolean().optional().parse(force)));
     handler('setTheme', theme => { const value = z.enum(['light', 'dark']).parse(theme); repo.setting('theme', value); nativeTheme.themeSource = value; });
     handler('setAutoBackup', enabled => repo.setting('autoBackup', String(z.boolean().parse(enabled))));
     handler('openFolder', async kind => { z.enum(['data', 'backup']).parse(kind); const error = await shell.openPath(kind === 'data' ? service.dataPath : service.backupPath); if (error) throw new Error(error); });
     if (process.env.SAKLI_DEV === '1') await window.loadURL('http://127.0.0.1:5173');
     else await window.loadFile(join(here, '../../dist/index.html'));
-    window.show();
-    tray = new Tray(join(here, '../../dist/qqwe.ico'));
+    if (!startedHidden(process.argv)) window.show();
+    tray = new Tray(appIcon);
     tray.setToolTip('DubBitig — Kişisel bilgi arşivi');
     const showWindow = () => { if (window.isMinimized()) window.restore(); window.show(); window.focus(); };
     tray.on('click', showWindow);
@@ -152,7 +163,13 @@ else {
       { label: 'Panodakini kaydet', click: () => void captureClipboard().catch(e => dialog.showErrorBox('Kayıt yapılamadı', String(e))) },
       { type: 'separator' }, { label: 'Çıkış', click: () => app.quit() }
     ]));
-    window.on('close', event => { if (!quitting && tray && !tray.isDestroyed()) { event.preventDefault(); window.hide(); } });
+    window.on('close', event => {
+      if (quitting) return;
+      const action = service.settings().closeAction;
+      if (action === 'quit' || !tray || tray.isDestroyed()) { quitting = true; app.quit(); return; }
+      event.preventDefault();
+      if (action === 'minimize') window.minimize(); else window.hide();
+    });
     // Windows shutdown must not be held up by close-to-tray behavior.
     window.on('query-session-end', () => { quitting = true; });
     receiveArgs = async args => {
@@ -178,8 +195,15 @@ else {
       if (service.settings().linkChecker) void service.checkLinks(undefined, undefined, true).catch(() => {});
     };
     tick(); timer = setInterval(tick, 60 * 1000);
+    // Announce a new GitHub release once per version; the About tab always shows the current state.
+    const announceUpdate = () => void checkUpdate().then(info => {
+      if (!info.available || !info.latest || repo.setting('updateNotified') === info.latest) return;
+      repo.setting('updateNotified', info.latest);
+      try { showNotification('DubBitig güncellemesi var', `Sürüm ${info.latest} yayımlandı. Ayarlar → Hakkında bölümünden indirebilirsin.`); } catch { /* The About tab still shows it. */ }
+    });
+    if (app.isPackaged) { setTimeout(announceUpdate, 15000); updateTimer = setInterval(announceUpdate, 24 * 3600 * 1000); }
     try { service.cleanupAssets(); } catch { /* Leftover files are retried on the next start. */ }
   }).catch(error => { dialog.showErrorBox('DubBitig başlatılamadı', String(error)); app.quit(); });
   app.on('window-all-closed', () => app.quit());
-  app.on('before-quit', () => { quitting = true; tray?.destroy(); tray = undefined; clearInterval(timer);clearInterval(inboxTimer);globalShortcut.unregisterAll(); if (service) { service.autoBackup(); service.repo.close(); service = undefined!; } });
+  app.on('before-quit', () => { quitting = true; tray?.destroy(); tray = undefined; clearInterval(timer);clearInterval(inboxTimer);clearInterval(updateTimer);globalShortcut.unregisterAll(); if (service) { service.autoBackup(); service.repo.close(); service = undefined!; } });
 }

@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "DubBitig’e kaydet",
+  "version": "1.8.0",
+  "description": "Seçili metinleri, komutları ve bağlantıları yerel DubBitig arşivine kaydet.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "dubbitig@nergal-exe.github.io",
+      "strict_min_version": "115.0"
+    }
+  },
+  "permissions": [
+    "contextMenus",
+    "nativeMessaging",
+    "storage",
+    "notifications",
+    "activeTab"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "DubBitig’e kaydet"
+  },
+  "icons": {
+    "128": "icon.png"
+  }
+}

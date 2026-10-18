@@ -34,8 +34,8 @@ try {
   expect((await page.evaluate(()=>window.sakli.snapshot())).entries.find(e=>e.kind==='command').language).toBe('powershell');
   await page.getByRole('button',{name:'Açık',exact:true}).click();
   await page.getByRole('button',{name:'Ayarlar ve yedekler',exact:true}).click();
-  await page.getByRole('button',{name:'Şimdi yedekle',exact:true}).click();
-  await page.getByRole('tab',{name:'Program Bilgi',exact:true}).click();await expect(page.getByText('Dub (Tablet)',{exact:true})).toBeVisible();await expect(page.getByText('Bitig (Yazı)',{exact:true})).toBeVisible();
+  await page.getByRole('tab',{name:'Yedekleme',exact:true}).click();await page.getByRole('button',{name:'Şimdi yedekle',exact:true}).click();
+  await page.getByRole('tab',{name:'Hakkında',exact:true}).click();await expect(page.getByText('Dub (Tablet)',{exact:true})).toBeVisible();await expect(page.getByText('Bitig (Yazı)',{exact:true})).toBeVisible();
   await page.screenshot({path:'test-results/about-light.png',animations:'disabled'});
   await page.getByRole('tab',{name:'Veriler',exact:true}).click();
   await page.getByRole('button',{name:'Bütün verileri sil',exact:true}).click();

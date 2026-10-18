@@ -11,6 +11,7 @@
     SetRegView lastused
   !endif
   WriteRegStr SHCTX "Software\Google\Chrome\NativeMessagingHosts\com.dubbitig.capture" "" "$INSTDIR\resources\native-host\com.dubbitig.capture.json"
+  WriteRegStr SHCTX "Software\Mozilla\NativeMessagingHosts\com.dubbitig.capture" "" "$INSTDIR\resources\native-host\com.dubbitig.capture.firefox.json"
   WriteRegStr SHCTX "Software\Classes\Directory\Background\shell\DubBitig" "" "Panodakini DubBitig'e kaydet"
   WriteRegStr SHCTX "Software\Classes\Directory\Background\shell\DubBitig" "Icon" "$INSTDIR\DubBitig.exe,0"
   WriteRegStr SHCTX "Software\Classes\Directory\Background\shell\DubBitig\command" "" '$\"$INSTDIR\DubBitig.exe$\" --capture-clipboard'
@@ -21,6 +22,7 @@
   WriteRegStr SHCTX "Software\Classes\*\shell\DubBitig" "Icon" "$INSTDIR\DubBitig.exe,0"
   WriteRegStr SHCTX "Software\Classes\*\shell\DubBitig\command" "" '$\"$INSTDIR\DubBitig.exe$\" $\"--capture-file=%1$\"'
   CreateShortCut "$SMPROGRAMS\DubBitig Chrome eklentisi.lnk" "$INSTDIR\resources\chrome-extension"
+  CreateShortCut "$SMPROGRAMS\DubBitig Firefox eklentisi.lnk" "$INSTDIR\resources\firefox-extension"
 !macroend
 
 !macro customUnInstall
@@ -30,9 +32,11 @@
     SetRegView lastused
   !endif
   DeleteRegKey SHCTX "Software\Google\Chrome\NativeMessagingHosts\com.dubbitig.capture"
+  DeleteRegKey SHCTX "Software\Mozilla\NativeMessagingHosts\com.dubbitig.capture"
   DeleteRegKey SHCTX "Software\Classes\Directory\Background\shell\DubBitig"
   DeleteRegKey SHCTX "Software\Classes\DesktopBackground\Shell\DubBitig"
   DeleteRegKey SHCTX "Software\Classes\*\shell\DubBitig"
   Delete "$SMPROGRAMS\DubBitig Chrome eklentisi.lnk"
+  Delete "$SMPROGRAMS\DubBitig Firefox eklentisi.lnk"
   ; User archives and backups deliberately remain under APPDATA\DubBitig.
 !macroend

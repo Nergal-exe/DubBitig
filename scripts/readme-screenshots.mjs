@@ -32,6 +32,9 @@ await page.reload(); await page.waitForLoadState('networkidle'); await page.wait
 const wait = () => page.waitForTimeout(400);
 await page.getByRole('button', { name: 'Çalışan işlemleri listele kaydını aç' }).click(); await page.mouse.move(0, 0); await wait();
 await page.screenshot({ path: path.join(out, 'ana-ekran.png'), animations: 'disabled' });
+await page.getByRole('combobox', { name: 'Arşivde ara' }).fill('win'); await wait();
+await page.screenshot({ path: path.join(out, 'arama.png'), animations: 'disabled', clip: { x: 248, y: 0, width: 1192, height: 520 } });
+await page.getByRole('combobox', { name: 'Arşivde ara' }).fill(''); await page.keyboard.press('Escape');
 await page.getByRole('button', { name: 'Ayrıntıları kapat' }).click();
 await page.getByRole('button', { name: /^Yeni kayıt/ }).click();
 await page.getByRole('group', { name: 'Kayıt türü' }).getByRole('button', { name: 'Not', exact: true }).click();
@@ -43,14 +46,17 @@ await page.getByRole('button', { name: 'plan etiketini kayda ekle' }).click(); a
 await page.evaluate(() => { document.querySelector('.archive-dialog').scrollTop = 0; }); await wait();
 await page.getByRole('dialog').screenshot({ path: path.join(out, 'yeni-kayit.png'), animations: 'disabled' });
 await page.getByRole('button', { name: 'Pencereyi kapat' }).click(); await page.getByRole('button', { name: 'Kaydetmeden çık' }).click();
-await page.getByRole('button', { name: 'Ayarlar ve yedekler', exact: true }).click(); await wait();
-await page.getByRole('dialog').screenshot({ path: path.join(out, 'yedekleme.png'), animations: 'disabled' });
-await page.getByRole('tab', { name: 'Genel', exact: true }).click(); await wait();
-await page.getByRole('dialog').screenshot({ path: path.join(out, 'genel-ayarlar.png'), animations: 'disabled' });
-await page.getByRole('tab', { name: 'Veriler', exact: true }).click(); await wait();
 // Keep the author's real profile path out of published screenshots.
-await page.evaluate(() => { document.querySelector('.data-location code').textContent = String.raw`C:\Users\Kullanıcı\AppData\Roaming\DubBitig`; });
+const mask = () => page.evaluate(() => document.querySelectorAll('.data-location code').forEach(el => { const base = String.raw`C:\Users\Kullanıcı\AppData\Roaming\DubBitig`; el.textContent = /backups$/.test(el.textContent) ? base + String.raw`\backups` : base; }));
+await page.getByRole('button', { name: 'Ayarlar ve yedekler', exact: true }).click(); await wait();
+await page.getByRole('dialog').screenshot({ path: path.join(out, 'genel-ayarlar.png'), animations: 'disabled' });
+await page.getByRole('tab', { name: 'Yedekleme', exact: true }).click(); await wait(); await mask();
+await page.getByRole('dialog').screenshot({ path: path.join(out, 'yedekleme.png'), animations: 'disabled' });
+await page.getByRole('tab', { name: 'Veriler', exact: true }).click(); await wait();
+await mask();
 await page.getByRole('dialog').screenshot({ path: path.join(out, 'veri-yonetimi.png'), animations: 'disabled' });
+await page.getByRole('tab', { name: 'Hakkında', exact: true }).click(); await wait();
+await page.getByRole('dialog').screenshot({ path: path.join(out, 'hakkinda.png'), animations: 'disabled' });
 await page.keyboard.press('Escape'); await wait();
 // Exercise the new trash flow end to end.
 await page.getByRole('button', { name: /^Çöp kutusu/ }).click();
