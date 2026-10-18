@@ -1,6 +1,6 @@
 {
   "name": "dubbitig",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "Komutların, bağlantıların, notların ve fotoğrafların için kişisel arşiv.",
   "author": "DubBitig",
   "main": "dist-electron/electron/main.js",
@@ -15,8 +15,10 @@
     "dist": "npm run build:integrations && npm run build && node scripts/build-setup.mjs",
     "build:integrations": "node scripts/build-integrations.mjs",
     "dist:portable": "npm run build:integrations && npm run build && electron-builder --win portable",
+    "dist:linux": "npm run build:integrations && npm run build && electron-builder --linux AppImage deb",
     "test:capture": "node tests/capture-desktop.mjs",
     "test:features": "node tests/features-15.mjs",
+    "test:features18": "node tests/features-18.mjs",
     "test:tray-transfer": "node tests/tray-transfer.mjs",
     "screenshots": "node scripts/readme-screenshots.mjs"
   },
@@ -81,10 +83,41 @@
         "to": "chrome-extension"
       },
       {
+        "from": "firefox-extension",
+        "to": "firefox-extension"
+      },
+      {
         "from": "build/native-host",
         "to": "native-host"
       }
-    ]
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "icon": "public/icon.png",
+      "category": "Office",
+      "executableName": "dubbitig",
+      "synopsis": "Komutlar, bağlantılar ve notlar için kişisel arşiv",
+      "description": "Komutların, bağlantıların, notların ve fotoğrafların için kişisel arşiv.",
+      "maintainer": "Nergal-exe <289826582+Nergal-exe@users.noreply.github.com>",
+      "artifactName": "DubBitig-${version}-${arch}.${ext}",
+      "desktop": {
+        "entry": {
+          "StartupWMClass": "DubBitig"
+        }
+      },
+      "syncDesktopName": true
+    },
+    "deb": {
+      "depends": [
+        "libnotify4",
+        "libxtst6",
+        "libnss3",
+        "libsecret-1-0"
+      ]
+    }
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
@@ -98,5 +131,7 @@
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.1"
-  }
+  },
+  "homepage": "https://github.com/Nergal-exe/DubBitig",
+  "desktopName": "dubbitig.desktop"
 }

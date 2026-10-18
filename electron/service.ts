@@ -4,7 +4,7 @@ import { existsSync, readFileSync, readdirSync, statSync, unlinkSync, mkdirSync,
 import { join, basename, resolve, dirname } from 'node:path';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
 import { z } from 'zod';
-import { archiveSchema, draftSchema, transferScopeSchema, backupPeriods, type TransferScope, type Asset, type Draft, type Entry, type Archive, type Settings, type WebPreview, type BackupPeriod } from '../src/shared/model.js';
+import { archiveSchema, draftSchema, transferScopeSchema, backupPeriods, closeActions, duplicateKeys, normalizeUrl, type CloseAction, type TransferScope, type Asset, type Draft, type Entry, type Archive, type Settings, type WebPreview, type BackupPeriod } from '../src/shared/model.js';
 import { atomicWrite, type Repository } from './repository.js';
 import { advanceDate, nextReminder } from './schedule.js';
 import { checkUrl, decodeHtml, fetchPublic, parseMetadata, type WebFetcher } from './web.js';
@@ -44,10 +44,24 @@ export class ArchiveService {
     this.repo.setting('wipePending', 'false');
   }
   snapshot() { const snapshot = this.repo.snapshot(); snapshot.tags = [...new Set([...snapshot.tags, ...snapshot.entries.flatMap(e => e.tags)])]; return snapshot; }
+  // Another record (active or trashed) already holding one of this draft's unique fields.
+  findDuplicate(input: Pick<Draft, 'kind' | 'title' | 'url' | 'content'>, excludeId?: string, ignore = new Set<string>()) {
+    const keys = duplicateKeys({ ...input, url: normalizeUrl(input.url) }).filter(([k]) => !ignore.has(k));
+    for (const entry of this.snapshot().entries) {
+      if (entry.id === excludeId) continue;
+      const theirs = new Set(duplicateKeys(entry).map(([k]) => k));
+      const hit = keys.find(([k]) => theirs.has(k));
+      if (hit) return { entry, reason: hit[1] };
+    }
+    return undefined;
+  }
   save(input: Draft, id?: string, newId?: string): Entry {
-    const draft = draftSchema.parse(input);
+    const draft = draftSchema.parse({ ...input, url: normalizeUrl(input.url ?? '') });
     const old = id ? this.repo.get(z.string().uuid().parse(id)) : undefined;
     if (id && !old) throw new Error('Kayıt bulunamadı.');
+    // Only newly introduced values are checked, so records that already collide can still be edited.
+    const duplicate = this.findDuplicate(draft, old?.id, new Set(old ? duplicateKeys(old).map(([k]) => k) : []));
+    if (duplicate) throw new Error(`${duplicate.reason}: “${duplicate.entry.title}”${duplicate.entry.deletedAt ? ' (çöp kutusunda)' : ''}.`);
     if (old?.deletedAt) throw new Error('Önce kaydı çöp kutusundan geri al.');
     if (draft.preview?.url !== draft.url) draft.preview = null;
     // A form opened before a reminder fired still carries the old time; never re-arm an occurrence already notified.
@@ -70,6 +84,14 @@ export class ArchiveService {
     const saved = current?.history?.find(h => h.id === z.string().uuid().parse(revisionId));
     if (!current || !saved) throw new Error('Sürüm bulunamadı.');
     return this.save({ ...saved.draft, category: current.category, tags: current.tags, reminder: current.reminder, expiresAt: current.expiresAt }, id);
+  }
+  // 1.8 removes the photo record type; existing photo records become notes that keep their photos.
+  migratePhotoKind() {
+    const s = this.snapshot(); const now = new Date().toISOString();
+    if (!s.entries.some(e => e.kind === 'photo')) return 0;
+    let changed = 0;
+    s.entries = s.entries.map(e => e.kind === 'photo' ? (changed++, { ...e, kind: 'note' as const, updatedAt: now, revision: e.revision + 1 }) : e);
+    this.repo.replace(s); return changed;
   }
   clearExistingCategories() {
     if (this.repo.setting('categoriesCleared13') === 'true') return;
@@ -280,14 +302,27 @@ export class ArchiveService {
   autoBackup(now = new Date()) {
     if (this.repo.setting('autoBackup') === 'false') return;
     const last = this.repo.setting('lastAutoBackup') ?? this.repo.setting('lastBackup');
-    if (last && now < new Date(advanceDate(last, this.backupPeriod()))) return;
+    if (last && now < this.nextBackupAt(last, now)) return;
     const changed = this.repo.setting('lastBackupSignature') !== this.signature();
     if (!last || changed) try { this.createBackup('auto'); } catch (e) { this.backupError = e instanceof Error ? e.message : String(e); }
   }
+  private backupTime() { const value = this.repo.setting('backupTime') ?? ''; return /^([01]\d|2[0-3]):[0-5]\d$/.test(value) ? value : ''; }
+  // A daily backup with a chosen time runs at the first check after that time each day.
+  nextBackupAt(last: string, now = new Date()) {
+    const time = this.backupTime();
+    if (this.backupPeriod() !== 'daily' || !time) return new Date(advanceDate(last, this.backupPeriod()));
+    const [hours, minutes] = time.split(':').map(Number); const slot = new Date(now); slot.setHours(hours, minutes, 0, 0);
+    if (slot > now) slot.setDate(slot.getDate() - 1);
+    if (new Date(last) >= slot) slot.setDate(slot.getDate() + 1);
+    return slot;
+  }
+  setBackupTime(time: string) { this.repo.setting('backupTime', z.string().regex(/^(([01]\d|2[0-3]):[0-5]\d)?$/, 'Saat SS:DD biçiminde olmalı.').parse(time)); }
+  private closeAction(): CloseAction { const value = this.repo.setting('closeAction'); return closeActions.includes(value as CloseAction) ? value as CloseAction : 'tray'; }
+  setCloseAction(action: CloseAction) { this.repo.setting('closeAction', z.enum(closeActions).parse(action)); }
   private backupPeriod(): BackupPeriod { const value = this.repo.setting('backupPeriod'); return backupPeriods.includes(value as BackupPeriod) ? value as BackupPeriod : 'daily'; }
   setBackupPeriod(period: BackupPeriod) { this.repo.setting('backupPeriod', z.enum(backupPeriods).parse(period)); }
   private signature() { return createHash('sha256').update(JSON.stringify(this.snapshot())).digest('hex'); }
   backups() { return readdirSync(this.backupPath).filter(n => /^sakli-.*\.sakli$/.test(n)).map(name => { const stat = statSync(join(this.backupPath, name)); return { name, date: stat.mtime.toISOString(), size: stat.size }; }).sort((a, b) => b.date.localeCompare(a.date)); }
   restoreBackup(name: string) { if (!this.backups().some(b => b.name === name)) throw new Error('Yedek bulunamadı.'); return this.importBytes(readFileSync(join(this.backupPath, name)), 'replace'); }
-  settings(): Settings { const last = this.repo.setting('lastAutoBackup') ?? this.repo.setting('lastBackup'); const next = last ? advanceDate(last, this.backupPeriod()) : null; return { theme: this.repo.setting('theme') === 'light' ? 'light' : 'dark', autoBackup: this.repo.setting('autoBackup') !== 'false', backupPeriod: this.backupPeriod(), nextBackup: next, backupDue: !!next && new Date(next) <= new Date(), linkChecker: this.repo.setting('linkChecker') !== 'false', lastBackup: this.repo.setting('lastBackup') ?? null, backupError: this.backupError, dataPath: this.dataPath, backupPath: this.backupPath }; }
+  settings(): Settings { const last = this.repo.setting('lastAutoBackup') ?? this.repo.setting('lastBackup'); const next = last ? this.nextBackupAt(last).toISOString() : null; return { backupTime: this.backupTime(), closeAction: this.closeAction(), theme: this.repo.setting('theme') === 'light' ? 'light' : 'dark', autoBackup: this.repo.setting('autoBackup') !== 'false', backupPeriod: this.backupPeriod(), nextBackup: next, backupDue: !!next && new Date(next) <= new Date(), linkChecker: this.repo.setting('linkChecker') !== 'false', lastBackup: this.repo.setting('lastBackup') ?? null, backupError: this.backupError, dataPath: this.dataPath, backupPath: this.backupPath }; }
 }

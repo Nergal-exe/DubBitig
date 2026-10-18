@@ -31,9 +31,15 @@ class NativeHost {
   static int Main(string[] args) {
     try {
       var home=AppDomain.CurrentDomain.BaseDirectory;
+      // Chrome passes the caller origin as the first argument; Firefox passes its manifest path and then the add-on ID.
+      bool allowed=false;
       var manifest=Json.Deserialize<Dictionary<string,object>>(File.ReadAllText(Path.Combine(home,"com.dubbitig.capture.json")));
-      var origins=(System.Collections.IEnumerable)manifest["allowed_origins"];bool allowed=false;
-      foreach(var origin in origins)if(args.Length>0 && String.Equals(args[0],origin.ToString(),StringComparison.Ordinal))allowed=true;
+      foreach(var origin in (System.Collections.IEnumerable)manifest["allowed_origins"])if(args.Length>0 && String.Equals(args[0],origin.ToString(),StringComparison.Ordinal))allowed=true;
+      var firefoxManifest=Path.Combine(home,"com.dubbitig.capture.firefox.json");
+      if(!allowed && args.Length>1 && File.Exists(firefoxManifest)) {
+        var firefox=Json.Deserialize<Dictionary<string,object>>(File.ReadAllText(firefoxManifest));
+        foreach(var extension in (System.Collections.IEnumerable)firefox["allowed_extensions"])if(String.Equals(args[1],extension.ToString(),StringComparison.Ordinal))allowed=true;
+      }
       if(!allowed)throw new Exception("Bu eklentinin erişim izni yok.");
       var input=Console.OpenStandardInput();var length=BitConverter.ToInt32(ReadExact(input,4),0);
       if(length<2 || length>1048576)throw new Exception("Mesaj en fazla 1 MB olabilir.");

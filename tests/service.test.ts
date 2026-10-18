@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import { strToU8, zipSync, unzipSync, strFromU8 } from 'fflate';
 import { SQLiteRepository } from '../electron/repository';
 import { ArchiveService } from '../electron/service';
-import type { Draft } from '../src/shared/model';
+import { normalizeUrl, type Draft } from '../src/shared/model';
 import { advanceDate, nextReminder } from '../electron/schedule';
 import { parseMetadata, checkUrl, publicUrl, isPublicAddress, decodeHtml, type WebFetcher } from '../electron/web';
 import { randomUUID } from 'node:crypto';
@@ -19,7 +19,7 @@ test('çoklu kategori ve her kayıt türü ayrı aktarılır; kısmi dosya tam g
   const f=await fixture(),target=await fixture();try {
     const file=join(f.dir,'image.png');writeFileSync(file,pngBytes);const photo=f.service.addPhoto(file);
     for(const kind of ['command','program','link','note','photo'] as const) f.service.save({...draft(kind),kind,url:kind==='link'?'https://example.com':'',category:kind==='command'?'İş':kind==='photo'?'':'Kişisel',tags:[kind],assets:kind==='photo'?[photo]:[]});
-    const deleted=f.service.save({...draft('silinen komut'),kind:'command',category:'İş'});f.service.trash(deleted.id);
+    const deleted=f.service.save({...draft('silinen komut'),kind:'command',content:'Remove-Item eski',category:'İş'});f.service.trash(deleted.id);
     f.service.category('add','Boş');
     assert.throws(()=>f.service.exportBytes({kind:'types',types:[]}));assert.throws(()=>f.service.exportBytes({kind:'categories',categories:[]}));assert.throws(()=>f.service.exportBytes({kind:'categories',categories:['olmayan']}));
     for(const kind of ['command','program','link','note','photo'] as const){
@@ -281,5 +281,51 @@ test('çöp kutusunu boşaltmak yalnızca silinen kayıtları ve artık kullanı
     assert.deepEqual(f.service.snapshot().entries.map(e => e.id), [kept.id]);
     assert.equal(f.service.cleanupAssets(24 * 3600 * 1000, Date.now() + 2 * 24 * 3600 * 1000).files, 1);
     assert.ok(!existsSync(join(f.service.assetPath, pending.id))); assert.ok(existsSync(join(f.service.assetPath, shared.id)));
+  } finally { f.close(); }
+});
+test('aynı başlık, bağlantı, program sitesi ve komut ikinci kez kaydedilemez; mevcut çakışmalar düzenlenebilir', async () => {
+  const f = await fixture(); try {
+    const link = f.service.save({ ...draft('MDN'), kind: 'link', url: 'developer.mozilla.org/tr/' });
+    assert.equal(link.url, 'https://developer.mozilla.org/tr/');
+    assert.throws(() => f.service.save({ ...draft('mdn') }), /başlıkla/);
+    assert.throws(() => f.service.save({ ...draft('Başka'), kind: 'link', url: 'http://www.developer.mozilla.org/tr' }), /bağlantı zaten/);
+    f.service.save({ ...draft('Everything'), kind: 'program', url: 'https://voidtools.com' });
+    assert.throws(() => f.service.save({ ...draft('Everything 2'), kind: 'program', url: 'voidtools.com/' }), /web sitesi/);
+    f.service.save({ ...draft('Listele'), kind: 'command', content: 'Get-Process  | Sort' });
+    assert.throws(() => f.service.save({ ...draft('Yine listele'), kind: 'command', content: 'Get-Process | Sort' }), /komut zaten/);
+    const trashed = f.service.save(draft('Çöpteki')); f.service.trash(trashed.id);
+    assert.throws(() => f.service.save(draft('çöpteki')), /çöp kutusunda/);
+    const edited = f.service.save({ ...link, description: 'Yeni açıklama' }, link.id); assert.equal(edited.description, 'Yeni açıklama');
+    // Older archives may already contain a collision; editing other fields must still work.
+    const snap = f.repo.snapshot(); const twin = { ...snap.entries.find(e => e.id === link.id)!, id: randomUUID(), url: 'https://ornek.com' }; f.repo.put(twin);
+    assert.equal(f.service.save({ ...twin, description: 'değişti' }, twin.id).description, 'değişti');
+  } finally { f.close(); }
+});
+test('adres yazılırken https:// otomatik eklenir', () => {
+  assert.equal(normalizeUrl('ornek.com'), 'https://ornek.com'); assert.equal(normalizeUrl(' ornek.com.tr/yol?a=1 '), 'https://ornek.com.tr/yol?a=1');
+  assert.equal(normalizeUrl('http://ornek.com'), 'http://ornek.com'); assert.equal(normalizeUrl('ornek.com:8080/x'), 'https://ornek.com:8080/x');
+  assert.equal(normalizeUrl('düz metin'), 'düz metin'); assert.equal(normalizeUrl(''), '');
+});
+test('eski fotoğraf kayıtları fotoğraflarıyla birlikte nota dönüşür; resim dosyası not olarak yakalanır', async () => {
+  const f = await fixture(); try {
+    const path = join(f.dir, 'resim.png'); writeFileSync(path, pngBytes); const asset = f.service.addPhoto(path);
+    const photo = f.service.save({ ...draft('Eski fotoğraf'), kind: 'photo', assets: [asset] });
+    assert.equal(f.service.migratePhotoKind(), 1); assert.equal(f.service.migratePhotoKind(), 0);
+    const migrated = f.repo.get(photo.id)!; assert.equal(migrated.kind, 'note'); assert.deepEqual(migrated.assets, [asset]);
+    const captured = captureFile(f.service, path); assert.equal(captured.kind, 'note'); assert.equal(captured.assets.length, 1);
+    assert.equal(captureFile(f.service, path).id, captured.id, 'aynı dosya ikinci kez kayıt oluşturmaz');
+  } finally { f.close(); }
+});
+test('günlük yedek seçilen saatte alınır', async () => {
+  const f = await fixture(); try {
+    f.service.setBackupTime('21:30'); assert.throws(() => f.service.setBackupTime('25:00'));
+    f.service.save(draft()); f.service.createBackup('auto');
+    const last = new Date(2027, 2, 10, 22, 0).toISOString(); f.repo.setting('lastAutoBackup', last);
+    assert.equal(f.service.nextBackupAt(last, new Date(2027, 2, 11, 9)).getTime(), new Date(2027, 2, 11, 21, 30).getTime());
+    f.service.save(draft('Değişiklik'));
+    const before = f.service.backups().length;
+    f.service.autoBackup(new Date(2027, 2, 11, 21, 0)); assert.equal(f.service.backups().length, before);
+    f.service.autoBackup(new Date(2027, 2, 11, 21, 31)); assert.equal(f.service.backups().length, before + 1);
+    f.service.setBackupTime(''); assert.equal(f.service.settings().backupTime, '');
   } finally { f.close(); }
 });

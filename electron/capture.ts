@@ -13,10 +13,18 @@ export function captureDraft(input: unknown): Draft {
   const p=captureSchema.parse(input);
   return {kind:p.kind,title:(p.title.trim() || (p.kind==='link'?new URL(p.url).hostname:p.text.trim().split(/\r?\n/)[0])).slice(0,200),content:p.kind==='link'?'':p.text,url:p.url,description:p.sourceUrl && p.sourceUrl!==p.url?`Kaynak: ${p.sourceUrl}`:'',category:'',tags:['hızlı kayıt'],favorite:false,assets:[]};
 }
+// Captures that match an existing record (same title, link or command) reveal that record instead of failing.
+export const existingCaptures = new WeakSet<Entry>();
+function saveOrReveal(service: ArchiveService, draft: Draft, newId?: string): Entry {
+  const duplicate=service.findDuplicate(draft);
+  if(!duplicate)return service.save(draft,undefined,newId);
+  if(duplicate.entry.deletedAt)service.trash(duplicate.entry.id,true);
+  const entry=service.repo.get(duplicate.entry.id)!;existingCaptures.add(entry);return entry;
+}
 export function saveCapture(service: ArchiveService, input: unknown): Entry {
   const p=captureSchema.parse(input); const existing=service.repo.get(p.id);
   // Request UUID is the entry UUID: retries and crash recovery cannot create duplicate records.
-  return existing ?? service.save(captureDraft(p),undefined,p.id);
+  return existing ?? saveOrReveal(service,captureDraft(p),p.id);
 }
 export function clipboardRequest(text: string): CaptureRequest {
   text=text.trim(); const isLink=webUrl.safeParse(text).success;
@@ -26,7 +34,7 @@ export function captureFile(service: ArchiveService, path: string) {
   const stat=statSync(path); if(!stat.isFile())throw new Error('Bir dosya seç.');
   const extension=extname(path).toLowerCase();
   const base:Draft={title:basename(path).slice(0,200),kind:'note',content:path,url:'',description:`Dosya: ${path}`,category:'',tags:['hızlı kayıt'],favorite:false,assets:[]};
-  if(['.png','.jpg','.jpeg','.gif','.webp'].includes(extension)) { base.kind='photo';base.assets=[service.addPhoto(path)];base.content=''; }
+  if(['.png','.jpg','.jpeg','.gif','.webp'].includes(extension)) { base.kind='note';base.assets=[service.addPhoto(path)];base.content='';base.description='Fotoğraf: '+basename(path); }
   else if(['.txt','.md','.ps1','.cmd','.bat','.sh','.url'].includes(extension)) {
     if(stat.size>200000)throw new Error('Metin dosyası en fazla 200 KB olabilir.');
     const bytes=readFileSync(path); const text=bytes[0]===255 && bytes[1]===254?bytes.subarray(2).toString('utf16le'):bytes.toString('utf8').replace(/^\uFEFF/,'');
@@ -34,7 +42,7 @@ export function captureFile(service: ArchiveService, path: string) {
     else {base.content=text;base.kind=['.ps1','.cmd','.bat','.sh'].includes(extension)?'command':'note';}
   } else if(extension==='.exe') {base.kind='program';base.description='Program konumu kaydedildi; dosya kopyalanmadı.';}
   else base.description='Dosya konumu kaydedildi; dosyanın kendisi kopyalanmadı.';
-  return service.save(base);
+  return saveOrReveal(service,base);
 }
 export function drainInbox(service: ArchiveService, onSaved:(e:Entry)=>void) {
   const folder=join(service.dataPath,'capture-inbox');mkdirSync(folder,{recursive:true});

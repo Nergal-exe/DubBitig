@@ -3,6 +3,24 @@ import { z } from 'zod';
 export const kinds = ['command', 'program', 'link', 'note', 'photo'] as const;
 export type Kind = typeof kinds[number];
 export const labels: Record<Kind, string> = { command: 'Komut', program: 'Program', link: 'Bağlantı', note: 'Not', photo: 'Fotoğraf' };
+// 'photo' stays readable for old archives, but new records attach photos to the other types.
+export const uiKinds = ['note', 'link', 'program', 'command'] as const satisfies readonly Kind[];
+// Adds https:// when a bare address such as example.com/yol is typed.
+export function normalizeUrl(value: string) {
+  const v = value.trim();
+  if (!v || /^[a-z][a-z0-9+.-]*:(?!\d)/i.test(v)) return v;
+  return /^[^\s/]+\.[^\s/]+(\/\S*)?$/.test(v) ? 'https://' + v : v;
+}
+const fold = (v: string) => v.toLocaleLowerCase('tr-TR').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ı/g, 'i').replace(/\s+/g, ' ').trim();
+export function urlKey(value: string) { try { const u = new URL(normalizeUrl(value)); return (u.hostname.replace(/^www\./, '') + u.pathname.replace(/\/+$/, '') + u.search).toLowerCase(); } catch { return fold(value); } }
+// Fields that must be unique among records, with a readable reason for each.
+export function duplicateKeys(d: Pick<Draft, 'kind' | 'title' | 'url' | 'content'>) {
+  const keys: [string, string][] = [['title:' + fold(d.title), 'Bu başlıkla bir kayıt zaten var']];
+  if (d.kind === 'link' && d.url) keys.push(['url:' + urlKey(d.url), 'Bu bağlantı zaten kayıtlı']);
+  if (d.kind === 'program' && d.url) keys.push(['program-url:' + urlKey(d.url), 'Bu programın web sitesi zaten kayıtlı']);
+  if (d.kind === 'command' && d.content.trim()) keys.push(['command:' + d.content.replace(/\s+/g, ' ').trim(), 'Bu komut zaten kayıtlı']);
+  return keys;
+}
 export const assetSchema = z.object({ id: z.string().uuid(), name: z.string().min(1).max(255), mime: z.enum(['image/png', 'image/jpeg', 'image/webp', 'image/gif']), size: z.number().int().min(1).max(20 * 1024 * 1024) });
 export type Asset = z.infer<typeof assetSchema>;
 export const previewSchema = z.object({ url: z.string().max(4000), title: z.string().max(200), description: z.string().max(1000), site: z.string().max(200), fetchedAt: z.string().datetime(), favicon: assetSchema.optional(), image: assetSchema.optional() });
@@ -11,6 +29,8 @@ export const reminderSchema = z.object({ at: z.string().datetime(), repeat: z.en
 export const noticeSchema = z.object({ id: z.string().uuid(), kind: z.enum(['reminder', 'expiry']), at: z.string().datetime(), read: z.boolean() });
 export const checkSchema = z.object({ state: z.enum(['ok', 'broken', 'unknown']), checkedAt: z.string().datetime(), status: z.number().optional(), detail: z.string().max(500) });
 export type LinkCheck = z.infer<typeof checkSchema>;
+export const closeActions = ['tray', 'minimize', 'quit'] as const;
+export type CloseAction = typeof closeActions[number];
 export const backupPeriods = ['30m', 'daily', 'weekly', 'monthly'] as const;
 export type BackupPeriod = typeof backupPeriods[number];
 export const draftSchema = z.object({
@@ -38,7 +58,7 @@ export const archiveSchema = z.object({ format: z.literal('sakli'), version: z.l
 export type Archive = z.infer<typeof archiveSchema>;
 export interface Snapshot { entries: Entry[]; categories: string[]; tags: string[] }
 export interface BackupInfo { name: string; date: string; size: number }
-export interface Settings { version?: string; theme: Theme; autoBackup: boolean; backupPeriod: BackupPeriod; nextBackup: string | null; backupDue?: boolean; linkChecker: boolean; lastBackup: string | null; backupError: string | null; dataPath: string; backupPath: string }
+export interface Settings { version?: string; theme: Theme; autoBackup: boolean; backupPeriod: BackupPeriod; nextBackup: string | null; backupDue?: boolean; backupTime: string; closeAction: CloseAction; openAtLogin?: boolean; loginSupported?: boolean; linkChecker: boolean; lastBackup: string | null; backupError: string | null; dataPath: string; backupPath: string }
 export interface ArchivePort {
   snapshot(): Promise<Snapshot>;
   save(draft: Draft, id?: string): Promise<Entry>;
@@ -49,8 +69,9 @@ export interface ArchivePort {
   restoreRevision(id: string, revisionId: string): Promise<Entry>;
 }
 export interface AssetPort { addPhotos(): Promise<Asset[]>; image(id: string): Promise<string> }
+export interface UpdateInfo { current: string; latest: string | null; available: boolean; url: string; notes: string; checkedAt: string; error?: string }
 export interface CleanupResult { entries?: number; files: number; bytes: number }
-export interface DesktopAPI { deleteAllData(confirmation: string):Promise<void>; emptyTrash(id?: string):Promise<CleanupResult & { entries: number }>; cleanupAssets():Promise<CleanupResult>; captureClipboard():Promise<Entry>; integrationFolder():Promise<void>; integrationWelcome():Promise<boolean>; onCaptured(callback:(value:{id:string;title:string})=>void):()=>void }
+export interface DesktopAPI { deleteAllData(confirmation: string):Promise<void>; emptyTrash(id?: string):Promise<CleanupResult & { entries: number }>; cleanupAssets():Promise<CleanupResult>; checkUpdate(force?: boolean):Promise<UpdateInfo>; setBackupTime(time: string):Promise<void>; setCloseAction(action: CloseAction):Promise<void>; setOpenAtLogin(enabled: boolean):Promise<void>; captureClipboard():Promise<Entry>; integrationFolder(browser?: 'chrome' | 'firefox'):Promise<void>; integrationWelcome():Promise<boolean>; onCaptured(callback:(value:{id:string;title:string})=>void):()=>void }
 export interface BackupPort { exportArchive(scope?: TransferScope): Promise<boolean>; importArchive(mode: 'merge' | 'replace', scope?: TransferScope): Promise<number | null>; backup(): Promise<void>; backups(): Promise<BackupInfo[]>; restoreBackup(name: string): Promise<number>; settings(): Promise<Settings>; setAutoBackup(enabled: boolean): Promise<void>; setTheme(theme: Theme): Promise<void> }
 export interface DesktopAPI extends ArchivePort, AssetPort, BackupPort { copy(text: string): Promise<void>; openUrl(url: string): Promise<void>; openFolder(kind: 'data' | 'backup'): Promise<void>; setBackupPeriod(period: BackupPeriod): Promise<void>; previewUrl(url: string): Promise<WebPreview>; checkLinks(id?: string): Promise<{ checked: number; broken: number }>; setLinkChecker(enabled: boolean): Promise<void>; testNotification(): Promise<void>; readNotice(id: string, noticeId: string): Promise<void> }
 // Future HTTP adapters implement ArchivePort/AssetPort. Sync transport remains optional.
