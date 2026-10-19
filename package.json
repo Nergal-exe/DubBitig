@@ -15,7 +15,7 @@
     "dist": "npm run build:integrations && npm run build && node scripts/build-setup.mjs",
     "build:integrations": "node scripts/build-integrations.mjs",
     "dist:portable": "npm run build:integrations && npm run build && electron-builder --win portable",
-    "dist:linux": "npm run build:integrations && npm run build && electron-builder --linux AppImage deb",
+    "dist:linux": "npm run build:integrations && npm run build && electron-builder --linux AppImage deb pacman",
     "test:capture": "node tests/capture-desktop.mjs",
     "test:features": "node tests/features-15.mjs",
     "test:features18": "node tests/features-18.mjs",
@@ -94,7 +94,8 @@
     "linux": {
       "target": [
         "AppImage",
-        "deb"
+        "deb",
+        "pacman"
       ],
       "icon": "public/icon.png",
       "category": "Office",
@@ -116,6 +117,16 @@
         "libxtst6",
         "libnss3",
         "libsecret-1-0"
+      ]
+    },
+    "pacman": {
+      "depends": [
+        "gtk3",
+        "nss",
+        "alsa-lib",
+        "libnotify",
+        "libsecret",
+        "libxtst"
       ]
     }
   },

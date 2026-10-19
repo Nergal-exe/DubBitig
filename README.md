@@ -104,7 +104,50 @@ Firefox eklentisi aynı özellikleri sunar ve `firefox-extension` klasöründedi
 
 ## Linux
 
-Sürüm sayfasındaki `DubBitig-x.y.z-x86_64.AppImage` dosyasını çalıştırılabilir yapıp açın (`chmod +x`) veya Debian/Ubuntu için `.deb` paketini kurun. Linux paketleri GitHub Actions ile Ubuntu üzerinde derlenir (`.github/workflows/linux.yml`). Veriler `~/.config/DubBitig` altındadır. Uygulama her açılışta Chrome, Chromium, Brave, Edge, Vivaldi ve Firefox için yerel bağlantıyı kullanıcı klasörüne kaydeder; eklentiler Windows'takiyle aynı şekilde yüklenir. Oturum açıldığında başlatma Ayarlar → Genel'den açılır. Dosya Gezgini sağ tık menüsü Linux'ta yoktur; pano kaydı için **Ctrl+Alt+D** (X11) veya tepsi menüsü kullanılır. Mağaza yayını sonrası aynı public key/ID ile `DUBBITIG_CHROME_STORE_ID` derleme değişkeni kullanılabilir. Chrome kullanıcı onayı isteyebilir.
+Linux paketleri GitHub Actions ile Ubuntu üzerinde derlenir (`.github/workflows/linux.yml`) ve [sürüm sayfasına](https://github.com/Nergal-exe/DubBitig/releases/latest) eklenir. Yalnızca 64 bit (x86_64) desteklenir.
+
+### Kurulum
+
+**AppImage (bütün dağıtımlar, kurulum gerektirmez)**
+
+```bash
+chmod +x DubBitig-1.8.0-x86_64.AppImage
+./DubBitig-1.8.0-x86_64.AppImage
+```
+
+AppImage açılmazsa FUSE eksiktir: Ubuntu 22.04 ve sonrasında `sudo apt install libfuse2`, Fedora'da `sudo dnf install fuse-libs`. Uygulama menüsüne eklemek için AppImageLauncher veya Gear Lever kullanılabilir. Güncellemek için yeni `.AppImage` dosyasını eskisinin yerine koymanız yeterlidir.
+
+**Debian / Ubuntu / Linux Mint / Pop!_OS (.deb)**
+
+```bash
+sudo apt install ./DubBitig-1.8.0-amd64.deb
+```
+
+Uygulama menüde **DubBitig** olarak görünür; terminalden `dubbitig` ile de açılır. Kaldırmak için `sudo apt remove dubbitig`.
+
+**Arch / CachyOS / Manjaro**
+
+Sürüm sayfasında `.pacman` dosyası varsa `sudo pacman -U DubBitig-x.y.z-x64.pacman` ile kurun; yoksa (1.8.0'da yoktur) kaynaktan derleyin: `cd packaging/arch && makepkg -si`. Paket `/opt/dubbitig` altına kurulur, `dubbitig` komutunu, uygulama menüsü kaydını ve simgeyi ekler; `sudo pacman -R dubbitig` ile kaldırılır.
+
+Hiçbir kurulum yöntemi arşivinizi silmez. Veriler `~/.config/DubBitig` altındadır: kayıtlar, fotoğraflar, `backups/` ve `capture-inbox/`.
+
+### Tarayıcı eklentileri
+
+1. DubBitig'i bir kez açın. Uygulama her açılışta Chrome, Chromium, Brave, Edge, Vivaldi ve Firefox için yerel bağlantıyı kullanıcı klasörüne kaydeder; AppImage'ı taşıdıysanız yeniden açmanız bağlantıyı günceller.
+2. Sürüm sayfasından `DubBitig-Chrome-x.y.z.zip` veya `DubBitig-Firefox-x.y.z.zip` dosyasını indirip kalıcı bir klasöre çıkarın.
+3. Chrome tabanlı tarayıcılar: `chrome://extensions` → Geliştirici modu → **Paketlenmemiş öğe yükle** → klasörü seçin.
+4. Firefox: `about:debugging#/runtime/this-firefox` → **Geçici eklenti yükle** → klasördeki `manifest.json`.
+
+Snap veya Flatpak olarak kurulan tarayıcılar yalıtım nedeniyle yerel bağlantıyı çalıştıramayabilir; bu durumda tarayıcının dağıtım paketini (`.deb`/`pacman`) kullanın.
+
+### Bilinen farklar
+
+- Oturum açıldığında başlatma Ayarlar → Genel'den açılır (`~/.config/autostart` kullanılır).
+- Dosya Gezgini sağ tık menüsü Linux'ta yoktur; pano kaydı için **Ctrl+Alt+D** veya tepsi menüsü kullanılır. Wayland'de (KDE Plasma, GNOME) kısayol ilk kullanımda masaüstünün izin penceresiyle onaylanır.
+- GNOME'da tepsi simgesi için **AppIndicator** eklentisi gerekir; yoksa kapat düğmesi davranışını Ayarlar → Genel'den "Simge durumuna küçült" yapın.
+- Uygulama açılmazsa (sandbox hatası) terminalden `dubbitig --no-sandbox` ile deneyin ve sorunu bildirin.
+
+Mağaza yayını sonrası aynı public key/ID ile `DUBBITIG_CHROME_STORE_ID` derleme değişkeni kullanılabilir. Chrome kullanıcı onayı isteyebilir.
 
 ## Geliştirme ve doğrulama
 

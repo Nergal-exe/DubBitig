@@ -1,6 +1,6 @@
 name: Linux paketleri
 
-# Builds the AppImage and .deb on Ubuntu (they cannot be produced on Windows) and attaches them to the release.
+# Builds the AppImage, .deb and Arch .pacman package on Ubuntu (they cannot be produced on Windows) and attaches them to the release.
 on:
   release:
     types: [published]
@@ -26,12 +26,14 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      # electron-builder needs bsdtar for the pacman package.
+      - run: sudo apt-get install -y libarchive-tools
       - run: npm ci
       - run: npm test
       - run: npm run build:integrations
       - run: npm run build
-      - run: npx electron-builder --linux AppImage deb --x64 --publish never
+      - run: npx electron-builder --linux AppImage deb pacman --x64 --publish never
       - name: Sürüme ekle
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$TAG" release-dubbitig/*.AppImage release-dubbitig/*.deb --clobber
+        run: gh release upload "$TAG" release-dubbitig/*.AppImage release-dubbitig/*.deb release-dubbitig/*.pacman --clobber

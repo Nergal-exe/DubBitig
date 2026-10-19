@@ -26,6 +26,8 @@ let updateTimer: ReturnType<typeof setInterval> | undefined;
 let receiveArgs: ((args: string[]) => Promise<void>) | undefined;
 const pendingArgs: string[][] = [process.argv];
 app.setName('DubBitig');
+// Wayland (KDE/GNOME) only grants Ctrl+Alt+D through the desktop portal.
+if (process.platform === 'linux') app.commandLine.appendSwitch('enable-features', 'GlobalShortcutsPortal');
 // Keep the stable Windows identity across upgrades.
 app.setAppUserModelId('com.sakli.archive');
 // Refuse migration while an old-version process owns its original profile lock.
