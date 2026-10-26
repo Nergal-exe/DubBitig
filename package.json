@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit && vite build && tsc -p tsconfig.electron.json",
     "start": "node scripts/start.mjs",
-    "test": "tsx --test tests/service.test.ts",
+    "test": "tsx --test tests/service.test.ts tests/data-location.test.ts",
     "test:desktop": "node tests/desktop.mjs",
     "package": "npm run build:integrations && npm run build && electron-builder --win dir",
     "dist": "npm run build:integrations && npm run build && node scripts/build-setup.mjs",
@@ -19,6 +19,7 @@
     "test:capture": "node tests/capture-desktop.mjs",
     "test:features": "node tests/features-15.mjs",
     "test:features18": "node tests/features-18.mjs",
+    "test:data-location": "node tests/data-location-desktop.mjs",
     "test:tray-transfer": "node tests/tray-transfer.mjs",
     "screenshots": "node scripts/readme-screenshots.mjs"
   },

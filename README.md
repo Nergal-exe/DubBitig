@@ -61,7 +61,87 @@ Veriler kullanıcıya özel `%APPDATA%\DubBitig` klasöründedir. Önceki `%APPD
 - `backups/`: tam arşiv yedekleri.
 - `capture-inbox/`: Chrome aktarım istekleri ve makbuzları.
 
-Ayarlar → Veriler bölümünde gerçek konumu görebilir ve klasörü açabilirsiniz. Uygulamayı kaldırmak arşivi silmez.
+Ayarlar → Veriler bölümünde gerçek konumu görebilir, klasörü açabilir ve **Veri konumunu değiştir** ile arşivi başka bir klasöre taşıyabilirsiniz (aşağıya bakın). Uygulamayı kaldırmak arşivi silmez.
+
+Varsayılan klasörde ayrıca `data-location.json` (seçilen veri konumu; her işletim sistemi kendi kopyasını tutar) ve Electron'un önbellek dosyaları bulunur. Veri klasöründeki `dubbitig.lock`, klasörü o anda hangi DubBitig'in kullandığını gösterir.
+
+## Veri konumunu değiştirme ve Windows/Linux ortak klasörü
+
+Windows ile Linux'u aynı bilgisayarda (dual-boot) kullanıyorsanız arşivi iki sistemin de eriştiği bir NTFS klasörüne koyabilirsiniz. İnternet, bulut veya senkronizasyon servisi gerekmez: iki sistem aynı fiziksel klasörü sırayla kullanır. Aynı anda iki bilgisayardan ya da iki sistemden düzenleme desteklenmez.
+
+### Ne zaman güvenli?
+
+- Aynı anda yalnızca **bir** DubBitig açık olmalı. Diğer sisteme geçmeden önce DubBitig'i tepsi menüsünden **Çıkış** ile kapatın.
+- Windows **tamamen kapatılmış** olmalı: Hızlı Başlatma kapalı olmalı, hazırda bekletme kullanılmamalı (ayrıntılar aşağıda).
+- Linux'ta NTFS bölümü **yazılabilir** bağlı olmalı.
+- Klasörü OneDrive, Dropbox, Google Drive gibi senkronizasyon klasörlerine koymayın; bu araçlar dosyayı arka planda değiştirebilir.
+
+DubBitig veritabanını bellekte tutar ve her değişiklikte `sakli.sqlite` dosyasını geçici dosya + `fsync` + yeniden adlandırma ile baştan yazar; SQLite'ın kendi dosya kilitleri kullanılmaz. Bu yüzden iki DubBitig aynı dosyayı birlikte yazarsa son yazan diğerinin değişikliklerini silebilir. Bunu önlemek için:
+
+- Açılışta veri klasöründe başka bir sistemin kilidi (`dubbitig.lock`) varsa uyarı gösterilir ve devam etmek için onay istenir.
+- Dosya bu DubBitig'in son yazdığı hâlden farklıysa (ör. hazırda bekletmeden dönen Windows'taki eski oturum) üzerine **yazılmaz**; uygulamayı yeniden başlatmanız istenir.
+- Dosya kaybolursa (bölüm ayrıldıysa) kayıt yapılmaz.
+
+NTFS üzerinde yeniden adlandırma ve `fsync` davranışı sürücüye göre değişir (Linux'ta `ntfs3` veya `ntfs-3g`). Bu sürümde ortak NTFS kullanımı gerçek bir dual-boot kurulumunda sınanmamıştır; yedeklerinizi ayrıca başka bir diske de alın.
+
+### 1. Ortak NTFS klasörü oluşturma
+
+Windows'ta iki sistemin de gördüğü bir NTFS bölümünde (C: dışında bir veri bölümü önerilir, ör. `D:`) `D:\DubBitigData` gibi boş bir klasör oluşturun. Linux'ta bu bölüm genellikle `/run/media/<kullanıcı>/<bölüm adı>` veya `/mnt/<ad>` altında görünür.
+
+### 2. Windows'ta veri konumunu değiştirme
+
+1. Ayarlar → Veriler → **Veri konumunu değiştir**.
+2. `D:\DubBitigData` klasörünü seçin. Klasör dolu ve DubBitig verisi değilse içinde `DubBitig` alt klasörü oluşturulur; diğer dosyalarınıza dokunulmaz.
+3. Özette taşınacak veriler, gereken ve boş alan gösterilir. **Kopyala ve geç** seçin.
+4. DubBitig önce güvenlik yedeği alır, yazmaları durdurur, her şeyi hedefteki gizli `.dubbitig-hazirlik-…` klasörüne kopyalar, her dosyayı boyut ve SHA-256 ile, veritabanını SQLite bütünlük denetimiyle doğrular. Ancak bundan sonra dosyalar yerine taşınır ve yeni konum kaydedilir.
+5. DubBitig yeniden başlar ve yeni klasörü kullanır. Eski klasör silinmez.
+
+Kopyalanan: `sakli.sqlite` (kayıtlar, kategoriler, etiketler, geçmiş, ayarlar), `photos/`, `backups/`, `capture-inbox/`. Fotoğraflar veritabanında yalnızca kimlikleriyle tutulur (mutlak yol yoktur), bu yüzden taşımadan sonra ve diğer sistemde de aynı kayıtlara bağlı kalır. Kaynakta zaten eksik olan fotoğraflar raporlanır; başka bir dosyaya bağlanmaz.
+
+### 3. Linux'ta aynı fiziksel klasörü seçme
+
+1. Windows'ta DubBitig'i kapatın ve Windows'u tamamen kapatın.
+2. Linux'ta NTFS bölümünü yazılabilir bağlayın (aşağıda).
+3. DubBitig → Ayarlar → Veriler → **Veri konumunu değiştir** → aynı klasörü (ör. `/run/media/kullanici/Veri/DubBitigData`) seçin.
+4. Klasörde arşiv bulunduğu için kopyalama yapılmaz; iki seçenek sunulur:
+   - **Bu arşivi kullan:** Linux'taki DubBitig ortak arşivle açılır. Linux'taki eski arşiv olduğu yerde (`~/.config/DubBitig`) kalır.
+   - **Kayıtlarımı ekleyip kullan:** Linux'ta daha önce kaydettikleriniz fotoğraflarıyla ortak arşive eklenir (önce ortak arşivin güvenlik yedeği alınır; aynı kayıtta daha yeni olan tutulur, çakışan sürümler kopya olarak eklenir).
+5. DubBitig yeniden başlar. Artık iki sistemde eklenen kayıtlar aynı klasörde birikir.
+
+### Linux'ta NTFS bölümünü yazılabilir bağlama
+
+Dosya yöneticisinde bölüme tıklamak çoğu masaüstünde onu `/run/media/<kullanıcı>/…` altına yazılabilir bağlar. Her açılışta aynı yolda olması için `/etc/fstab` örneği (UUID'yi `lsblk -f` ile bulun):
+
+```
+UUID=XXXXXXXXXXXXXXXX  /mnt/veri  ntfs3  uid=1000,gid=1000,windows_names,nofail  0  0
+```
+
+`ntfs3` yoksa sürücü olarak `ntfs-3g` kullanılabilir. DubBitig bölümü kendisi bağlamaz, biçimlendirmez ve sistem ayarlarını değiştirmez; yalnızca klasöre yazılabildiğini sınar.
+
+### Windows Hızlı Başlatma ve hazırda bekletme uyarısı
+
+Hızlı Başlatma açıkken veya Windows hazırda bekletmedeyken NTFS bölümü "kullanımda" bırakılır. Linux bölümü bağlamayı reddeder ya da yalnızca okunabilir bağlar; zorla yazmak veri kaybına yol açabilir. DubBitig bu durumda klasörü "yazılamıyor" diye bildirir.
+
+- Denetim Masası → Güç Seçenekleri → Güç düğmelerinin yapacaklarını seçin → **Hızlı başlatmayı aç** kutusunu kaldırın.
+- Linux'a geçerken **Yeniden başlat** veya (Hızlı Başlatma kapalıyken) **Kapat** kullanın; hazırda bekletmeyin.
+- Hazırda bekleyen Windows'ta açık kalmış DubBitig, Windows'a dönüldüğünde Linux'taki değişikliklerin üzerine yazmaya çalışırsa yazma reddedilir; DubBitig'i yeniden başlatın.
+
+### Yedek alma ve eski konuma dönme
+
+- Taşımadan önce otomatik olarak `before-relocation` güvenlik yedeği alınır. Ayrıca **Dışarı aktar** ile başka bir diske tam yedek almanız önerilir.
+- Eski klasör kendiliğinden silinmez. Ayarlar → Veriler'deki **Eski kopyayı temizle**, onayınızdan sonra yalnızca DubBitig veri dosyalarını sistemin çöp kutusuna taşır.
+- Eski konuma dönmek için **Veri konumunu değiştir** ile eski klasörü seçip **Bu arşivi kullan** deyin. Varsayılan konum Windows'ta `%APPDATA%\DubBitig`, Linux'ta `~/.config/DubBitig` klasörüdür. Eski klasör taşıma anındaki hâlindedir; sonraki kayıtları almak için **Kayıtlarımı ekleyip kullan** seçin.
+
+### Veri klasörü erişilemiyorsa kurtarma
+
+Seçilen klasör bulunamaz, boşsa (bağlanmamış bağlama noktası), okunamaz veya yazılamazsa DubBitig **boş arşiv oluşturmaz**; açılışta şu seçenekleri sunar:
+
+- **Yeniden dene:** Bölümü bağladıktan sonra.
+- **Başka klasör seç:** Arşivin (`sakli.sqlite`) bulunduğu klasörü gösterin; bütünlüğü denetlenip kullanılır.
+- **Varsayılan konumu kullan:** Varsayılan klasördeki (daha eski olabilecek) arşivle açılır. Ortak klasör geri geldiğinde Ayarlar'dan yeniden seçin.
+- **Çık.**
+
+Taşıma sırasında uygulama kapanır veya elektrik kesilirse, yeni konum kaydedilmediği sürece eski klasör kullanılmaya devam eder; sonraki açılışta işlem günlüğüne (`data-location-journal.json`) bakılarak hedefteki yarım kopya kaldırılır. Elle kurtarma gerekirse: DubBitig'i kapatın, varsayılan klasördeki `data-location.json` dosyasını silin (DubBitig varsayılan konumu kullanır) veya içindeki `path` değerini arşivin bulunduğu klasörle değiştirin.
 
 ## Kullanım
 
@@ -159,6 +239,7 @@ npm.cmd test
 npm.cmd run test:desktop
 npm.cmd run test:features
 npm.cmd run test:features18
+npm.cmd run test:data-location
 npm.cmd run test:tray-transfer
 npm.cmd run dist
 npm run dist:linux   # yalnızca Linux üzerinde
@@ -170,7 +251,7 @@ npm.cmd run screenshots
 
 ## Mimari
 
-`src/shared/model.ts` doğrulama şemaları ile ArchivePort, AssetPort, BackupPort ve SyncTransport sözleşmelerini içerir. `electron/repository.ts` SQLite adapterıdır; `electron/service.ts` Electron'dan bağımsız iş kurallarını uygular. `electron/data-location.ts` veri geçişini yönetir. `electron/main.ts` dar kapsamlı IPC, tepsi, pano ve dosya diyaloglarını sağlar; `src/api.ts` arayüzün adapter erişim noktasıdır.
+`src/shared/model.ts` doğrulama şemaları ile ArchivePort, AssetPort, BackupPort ve SyncTransport sözleşmelerini içerir. `electron/repository.ts` SQLite adapterıdır; `electron/service.ts` Electron'dan bağımsız iş kurallarını uygular. `electron/data-location.ts` eski klasör geçişini, seçilen veri konumunu, doğrulamalı taşımayı, yarım kalan taşımanın geri alınmasını ve veri klasörü kilidini yönetir. `electron/main.ts` dar kapsamlı IPC, tepsi, pano ve dosya diyaloglarını sağlar; `src/api.ts` arayüzün adapter erişim noktasıdır.
 
 Renderer sandbox, contextIsolation ve nodeIntegration=false kullanır. Harici adresler HTTP/HTTPS olarak sistem tarayıcısında açılır. Web isteklerinde boyut/zaman/yönlendirme ve özel ağ adresi kontrolleri bulunur. Telemetri yoktur. Mevcut sürüm yereldir; çalışan self-hosted/web senkronizasyonu yoktur. Sonraki adım kimlik doğrulamalı HTTP adapterları, kalıcı outbox, cihaz kimliği ve çakışma yönetimidir.
 
