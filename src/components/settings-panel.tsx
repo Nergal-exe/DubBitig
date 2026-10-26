@@ -1,17 +1,23 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Database, HardDrive, Info, Settings2, Trash2, FolderOpen, FolderInput, Download, Upload, RotateCcw, RefreshCw, ExternalLink, CheckCircle2 } from 'lucide-react';
+import { Database, HardDrive, Info, Settings2, Trash2, FolderOpen, FolderInput, Download, Upload, RotateCcw, RefreshCw, ExternalLink, CheckCircle2, Check } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './ui/tabs';
 import { AppWindow } from './window';
 import { getAPI } from '../api';
-import type { BackupInfo, BackupPeriod, CloseAction, RelocationProgress, Settings, UpdateInfo, UpdateProgress } from '../shared/model';
+import type { BackupInfo, BackupPeriod, CloseAction, DesignStyle, RelocationProgress, Settings, Theme, UpdateInfo, UpdateProgress } from '../shared/model';
 const date = (v: string) => new Date(v).toLocaleString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 const errorText = (e: unknown) => String(e).replace(/^Error: Error invoking remote method '[^']+': Error: /, '');
 const phases: Record<RelocationProgress['phase'], string> = { prepare: 'Hazırlanıyor', backup: 'Güvenlik yedeği alınıyor', copy: 'Dosyalar kopyalanıyor ve doğrulanıyor', database: 'Veritabanı doğrulanıyor', commit: 'Yeni konum etkinleştiriliyor', merge: 'Kayıtlar seçilen arşive ekleniyor' };
+const styleOptions: { value: DesignStyle; label: string; note: string }[] = [
+  { value: 'dubbitig', label: 'DubBitig', note: 'Uygulamanın kendi görünümü.' },
+  { value: 'fluent', label: 'Fluent (Windows 11)', note: 'Windows 11 renkleri, sade köşeler, alt çizgili metin kutuları.' },
+  { value: 'macos', label: 'macOS', note: 'Sistem mavisi, küçük kontroller, dolu kenar çubuğu seçimi.' },
+  { value: 'material', label: 'Material 3', note: 'Hap düğmeler, tonlu yüzeyler, yükseltilmiş kartlar.' },
+];
 const bytes = (v: number) => v < 1048576 ? Math.max(1, Math.round(v / 1024)) + ' KB' : (v / 1048576).toFixed(1) + ' MB';
-export function SettingsPanel({ close, changed, notify, transfer, reset, update, checkUpdate }: { close: () => void; changed: () => Promise<void>; notify: (v: string, e?: boolean) => void; transfer: (mode: 'import' | 'export') => void; reset: () => Promise<void>; update: UpdateInfo | null; checkUpdate: () => Promise<UpdateInfo> }) {
+export function SettingsPanel({ close, changed, notify, transfer, reset, update, checkUpdate, theme, designStyle, changeDesignStyle }: { close: () => void; changed: () => Promise<void>; notify: (v: string, e?: boolean) => void; transfer: (mode: 'import' | 'export') => void; reset: () => Promise<void>; update: UpdateInfo | null; checkUpdate: () => Promise<UpdateInfo>; theme: Theme; designStyle: DesignStyle; changeDesignStyle: (value: DesignStyle) => Promise<void> }) {
   const [settings, setSettings] = useState<Settings>(); const [backups, setBackups] = useState<BackupInfo[]>([]); const [busy, setBusy] = useState(false); const [confirm, setConfirm] = useState(false); const [phrase, setPhrase] = useState('');
   const [checking, setChecking] = useState(false); const [moving, setMoving] = useState<RelocationProgress | null>(null);
   useEffect(() => getAPI().onRelocationProgress(setMoving), []);
@@ -29,6 +35,11 @@ export function SettingsPanel({ close, changed, notify, transfer, reset, update,
     <div className="modal-body">
     <Tabs defaultValue="general" className="gap-6"><TabsList className="grid w-full grid-cols-4"><TabsTrigger value="general"><Settings2/>Genel</TabsTrigger><TabsTrigger value="backup"><HardDrive/>Yedekleme</TabsTrigger><TabsTrigger value="data"><Database/>Veriler</TabsTrigger><TabsTrigger value="about"><Info/>Hakkında{update?.available && <span className="update-dot inline" aria-label="Yeni sürüm var"/>}</TabsTrigger></TabsList>
       <TabsContent value="general" className="space-y-5">
+        <h3>Tema</h3>
+        <p className="muted">Arayüzün tasarım dilini seç. Sol menünün altındaki Açık / Koyu seçimi her temayla birlikte çalışır; şu an {theme === 'light' ? 'açık' : 'koyu'} görünüm önizleniyor.</p>
+        <div className="style-picker" role="group" aria-label="Tema seçimi">{styleOptions.map(o => <button key={o.value} type="button" className="style-option" aria-pressed={designStyle === o.value} disabled={busy} onClick={() => { if (designStyle !== o.value) void action(() => changeDesignStyle(o.value), `${o.label} teması uygulandı.`); }}>
+          <span className="style-preview" data-style-preview={o.value} aria-hidden="true"><span className="sp-side"><span className="sp-fab"/><span className="sp-nav on"/><span className="sp-nav"/><span className="sp-nav"/></span><span className="sp-main"><span className="sp-search"/><span className="sp-card"><span className="sp-line"/><span className="sp-line short"/><span className="sp-row"><span className="sp-btn"/><span className="sp-btn primary"/></span></span></span></span>
+          <strong>{o.label}{designStyle === o.value && <Check size={15}/>}</strong><small>{o.note}</small></button>)}</div>
         <h3>Pencere ve başlangıç</h3>
         <div className="setting-row"><label>Kapat (X) düğmesine basınca<select aria-label="Kapatma davranışı" value={settings?.closeAction ?? 'tray'} disabled={busy || !settings} onChange={e => action(() => getAPI().setCloseAction(e.target.value as CloseAction))}><option value="tray">Sistem tepsisine gizle</option><option value="minimize">Simge durumuna küçült</option><option value="quit">Uygulamadan çık</option></select></label><p className="hint">{settings?.closeAction === 'quit' ? 'Kapatınca hatırlatıcı ve otomatik yedekleme durur.' : settings?.closeAction === 'minimize' ? 'Pencere görev çubuğuna küçülür; uygulama çalışmaya devam eder.' : 'Pencere saatin yanındaki simgeye gizlenir; hatırlatıcı ve yedekleme çalışır.'}</p></div>
         <div className="setting-row"><div><strong>{navigator.userAgent.includes('Linux') ? 'Oturum açıldığında başlat' : 'Windows başladığında başlat'}</strong><p>{settings?.loginSupported === false ? 'Yalnızca kurulu sürümde kullanılabilir.' : 'DubBitig açılışta sistem tepsisinde başlar; hatırlatıcılar ve yedekleme kaçmaz.'}</p></div><label className="switch"><input type="checkbox" aria-label="Açılışta başlat" checked={settings?.openAtLogin ?? false} disabled={busy || !settings?.loginSupported} onChange={e => action(() => getAPI().setOpenAtLogin(e.target.checked), e.target.checked ? 'DubBitig açılışta başlayacak.' : 'Açılışta başlatma kapatıldı.')}/><span/></label></div>
@@ -36,7 +47,6 @@ export function SettingsPanel({ close, changed, notify, transfer, reset, update,
         <div className="setting-row"><div><strong>Arka planda bağlantı denetimi</strong><p>Bağlantılar günde bir denetlenir. 404 ve 410 yanıtları kırık, erişim engeli ve zaman aşımı belirsiz gösterilir.</p></div><label className="switch"><input type="checkbox" aria-label="Arka planda bağlantı denetimi" checked={settings?.linkChecker ?? true} disabled={busy || !settings} onChange={e => action(() => getAPI().setLinkChecker(e.target.checked))}/><span/></label></div>
         <div className="flex flex-wrap gap-2"><Button variant="outline" disabled={busy} onClick={() => action(async () => { const r = await getAPI().checkLinks(); notify(`${r.checked} bağlantı denetlendi, ${r.broken} kırık bağlantı bulundu.`); })}>Bağlantıları şimdi denetle</Button><Button variant="outline" disabled={busy} onClick={() => action(() => getAPI().testNotification(), 'Deneme bildirimi gönderildi.')}>Bildirimi dene</Button></div>
         <p className="hint">Hatırlatıcılar uygulama açıkken çalışır. Kaçırılan tarihler sonraki açılışta bildirilir. Tamamen kapatmak için tepsi menüsünden Çıkış seç.</p>
-        <h3>Görünüm</h3><p className="muted">Sol menünün altındaki Açık / Koyu seçimiyle temayı değiştirebilirsin.</p>
       </TabsContent>
       <TabsContent value="backup" className="space-y-5"><div className="settings-callout"><HardDrive/><div><h3>Bilgini güvenle sakla</h3><p>Kayıtların ve fotoğrafların birlikte yedeklenir.</p></div></div>
         <div className="setting-row"><div><strong>Otomatik yedekleme</strong><p>Değişiklik varsa seçtiğin aralıkta yedeklenir. Son 14 otomatik yedek tutulur.</p></div><label className="switch"><input type="checkbox" aria-label="Otomatik yedekleme" checked={settings?.autoBackup ?? false} disabled={busy || !settings} onChange={e => action(() => getAPI().setAutoBackup(e.target.checked))}/><span/></label></div>

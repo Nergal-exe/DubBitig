@@ -8,7 +8,7 @@ import { Typeahead, matches, type Suggestion } from './components/typeahead';
 import { ContentEditor, RichContent } from './components/rich-content';
 import { SettingsPanel } from './components/settings-panel';
 import { getAPI } from './api';
-import { draftSchema, duplicateKeys, isListKind, kinds, labels, normalizeUrl, uiKinds, type Asset, type Draft, type Entry, type Kind, type Snapshot, type Theme, type UpdateInfo } from './shared/model';
+import { draftSchema, duplicateKeys, isListKind, kinds, labels, normalizeUrl, uiKinds, type Asset, type Draft, type Entry, type Kind, type Snapshot, type Theme, type DesignStyle, type UpdateInfo } from './shared/model';
 
 const typeIcons = { command: TerminalWindow, program: SquaresFour, link: LinkIcon, note: FileText, photo: ImageSquare, movie: FilmSlate, book: BookOpen };
 const plurals: Record<Kind, string> = { command: 'Komutlar', program: 'Programlar', link: 'Bağlantılar', note: 'Notlar', photo: 'Fotoğraflar', movie: 'Diziler/Filmler', book: 'Kitaplar' };
@@ -66,7 +66,7 @@ export default function App() {
   const [flash, setFlash] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null); const [editor, setEditor] = useState<Entry | Draft | null>(null);
   const [showSettings, setShowSettings] = useState(false); const [showCategories, setShowCategories] = useState(false); const [showTags, setShowTags] = useState(false);
-  const [theme, setTheme] = useState<Theme>('dark'); const [themeBusy, setThemeBusy] = useState(false);
+  const [theme, setTheme] = useState<Theme>('dark'); const [themeBusy, setThemeBusy] = useState(false); const [designStyle, setDesignStyle] = useState<DesignStyle>('dubbitig');
   const [transfer, setTransfer] = useState<'import' | 'export' | null>(null);
   const [historyId, setHistoryId] = useState<string | null>(null); const [inbox, setInbox] = useState(false);
   const [integrations, setIntegrations] = useState(false);
@@ -76,12 +76,13 @@ export default function App() {
   const searchRef = useRef<HTMLInputElement>(null);
   const notify = useCallback((text: string, error = false) => setToast({ text, error }), []);
   const reload = useCallback(async () => { const data = await getAPI().snapshot(); setSnapshot(data); }, []);
-  useEffect(() => { Promise.all([reload(), getAPI().settings().then(s => setTheme(s.theme))]).catch(e => setFatal(message(e))).finally(() => setLoading(false)); }, [reload]);
+  useEffect(() => { Promise.all([reload(), getAPI().settings().then(s => { setTheme(s.theme); setDesignStyle(s.designStyle); })]).catch(e => setFatal(message(e))).finally(() => setLoading(false)); }, [reload]);
   useEffect(() => getAPI().onCaptured(value => { void reload(); setSection('all'); setCategory(''); setTag(''); setQuery(''); setSelected(value.id); notify('DubBitig’e kaydedildi: ' + value.title); }), [reload, notify]);
   useEffect(() => { getAPI().integrationWelcome().then(setIntegrations).catch(() => {}); }, []);
   useEffect(() => { const check = () => void getAPI().checkUpdate().then(setUpdate).catch(() => {}); const first = setTimeout(check, 3000); const timer = setInterval(check, 6 * 3600 * 1000); return () => { clearTimeout(first); clearInterval(timer); }; }, []);
   useEffect(() => { const timer = setInterval(() => { if (!document.hidden) void reload().catch(() => {}); }, 15000); return () => clearInterval(timer); }, [reload]);
   useEffect(() => { document.documentElement.dataset.theme = theme; }, [theme]);
+  useEffect(() => { document.documentElement.dataset.style = designStyle; }, [designStyle]);
   useEffect(() => { try { localStorage.setItem('dubbitig-layout', layout); } catch { /* Layout preference is optional. */ } }, [layout]);
   useEffect(() => { if (!flash) return; const timer = setTimeout(() => setFlash(null), 2400); return () => clearTimeout(timer); }, [flash]);
   const changeTheme = async (value: Theme) => { setThemeBusy(true); try { await getAPI().setTheme(value); setTheme(value); } catch (e) { notify(message(e), true); } finally { setThemeBusy(false); } };
@@ -227,7 +228,7 @@ export default function App() {
     </div></Modal>}
     {historyId && snapshot.entries.find(e => e.id === historyId) && <HistoryPanel entry={snapshot.entries.find(e => e.id === historyId)!} close={() => setHistoryId(null)} changed={reload} notify={notify}/>}
     {inbox && <ReminderInbox entries={alive} close={() => setInbox(false)} changed={reload} notify={notify} show={e => { setInbox(false); navigate('all'); setSelected(e.id); }} edit={e => { setInbox(false); setSelected(e.id); setEditor(e); }}/>}
-    {showSettings && <SettingsPanel update={update} checkUpdate={async () => { const info = await getAPI().checkUpdate(true); setUpdate(info); return info; }} reset={async () => { setSelected(null); setCategory(''); setTag(''); setQuery(''); setSection('all'); setTheme((await getAPI().settings()).theme); await reload(); }} close={() => setShowSettings(false)} changed={reload} notify={notify} transfer={mode => { setShowSettings(false); setTransfer(mode); }}/>}
+    {showSettings && <SettingsPanel update={update} checkUpdate={async () => { const info = await getAPI().checkUpdate(true); setUpdate(info); return info; }} reset={async () => { setSelected(null); setCategory(''); setTag(''); setQuery(''); setSection('all'); const s = await getAPI().settings(); setTheme(s.theme); setDesignStyle(s.designStyle); await reload(); }} designStyle={designStyle} changeDesignStyle={async value => { await getAPI().setDesignStyle(value); setDesignStyle(value); }} theme={theme} close={() => setShowSettings(false)} changed={reload} notify={notify} transfer={mode => { setShowSettings(false); setTransfer(mode); }}/>}
     {transfer && <TransferPanel mode={transfer} snapshot={snapshot} initialCategory={category} close={() => setTransfer(null)} changed={reload} notify={notify}/>}
     {confirmDelete && <Modal modal title="Kaydı çöp kutusuna taşı" close={() => setConfirmDelete(null)}><div className="modal-body"><p><strong>{confirmDelete.title}</strong> çöp kutusuna taşınacak. Daha sonra Çöp kutusu bölümünden geri alabilirsin.</p></div><div className="modal-actions"><button onClick={() => setConfirmDelete(null)}>Vazgeç</button><button className="danger-solid" onClick={() => run(async () => { await getAPI().trash(confirmDelete.id); setConfirmDelete(null); setSelected(null); }, 'Kayıt çöp kutusuna taşındı.')}><Trash size={18}/>Çöp kutusuna taşı</button></div></Modal>}
     {purge && <Modal modal title={purge === 'all' ? 'Çöp kutusunu boşalt' : 'Kaydı kalıcı olarak sil'} close={() => setPurge(null)}><div className="modal-body"><p>{purge === 'all' ? <><strong>{trashed} kayıt</strong> ve yalnızca bu kayıtlara ait fotoğraflar kalıcı olarak silinecek.</> : <><strong>{purge.title}</strong> ve yalnızca bu kayda ait fotoğraflar kalıcı olarak silinecek.</>}</p><p className="muted">Bu işlem geri alınamaz. Daha önce alınmış yedeklerdeki kopyalar korunur.</p></div><div className="modal-actions"><button onClick={() => setPurge(null)}>Vazgeç</button><button className="danger-solid" onClick={() => run(async () => { const result = await getAPI().emptyTrash(purge === 'all' ? undefined : purge.id); setPurge(null); setSelected(null); notify(`${result.entries} kayıt kalıcı olarak silindi${result.files ? `, ${result.files} dosya temizlendi (${size(result.bytes)})` : ''}.`); })}><Trash size={18}/>{purge === 'all' ? 'Çöp kutusunu boşalt' : 'Kalıcı olarak sil'}</button></div></Modal>}

@@ -345,3 +345,12 @@ test('Dizi/Film ve Kitap kayıtları yalnızca ad, açıklama, bağlantı ve eti
     const target = await fixture(); try { assert.equal(target.service.importBytes(f.service.exportBytes(), 'merge'), 3); assert.equal(target.service.snapshot().entries.filter(e => e.kind === 'book').length, 2); } finally { target.close(); }
   } finally { f.close(); }
 });
+test('tasarım teması kaydedilir, geçersiz değer reddedilir ve bütün veriler silinince varsayılana döner', async () => {
+  const f = await fixture(); try {
+    assert.equal(f.service.settings().designStyle, 'dubbitig');
+    for (const style of ['fluent', 'macos', 'material', 'dubbitig'] as const) { f.service.setDesignStyle(style); assert.equal(f.service.settings().designStyle, style); }
+    assert.throws(() => f.service.setDesignStyle('aqua' as never));
+    f.repo.setting('designStyle', 'eski-deger'); assert.equal(f.service.settings().designStyle, 'dubbitig');
+    f.service.setDesignStyle('material'); f.service.deleteAllData('BÜTÜN VERİLERİ SİL'); assert.equal(f.service.settings().designStyle, 'dubbitig');
+  } finally { f.close(); }
+});

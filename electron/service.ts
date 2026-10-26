@@ -4,7 +4,7 @@ import { existsSync, readFileSync, readdirSync, statSync, unlinkSync, mkdirSync,
 import { join, basename, resolve, dirname } from 'node:path';
 import { zipSync, unzipSync, strToU8, strFromU8 } from 'fflate';
 import { z } from 'zod';
-import { archiveSchema, draftSchema, transferScopeSchema, backupPeriods, closeActions, duplicateKeys, normalizeUrl, type CloseAction, type TransferScope, type Asset, type Draft, type Entry, type Archive, type Settings, type WebPreview, type BackupPeriod } from '../src/shared/model.js';
+import { archiveSchema, draftSchema, transferScopeSchema, backupPeriods, closeActions, designStyles, duplicateKeys, normalizeUrl, type CloseAction, type DesignStyle, type TransferScope, type Asset, type Draft, type Entry, type Archive, type Settings, type WebPreview, type BackupPeriod } from '../src/shared/model.js';
 import { atomicWrite, type Repository } from './repository.js';
 import { advanceDate, nextReminder } from './schedule.js';
 import { checkUrl, decodeHtml, fetchPublic, parseMetadata, type WebFetcher } from './web.js';
@@ -317,6 +317,8 @@ export class ArchiveService {
     return slot;
   }
   setBackupTime(time: string) { this.repo.setting('backupTime', z.string().regex(/^(([01]\d|2[0-3]):[0-5]\d)?$/, 'Saat SS:DD biçiminde olmalı.').parse(time)); }
+  private designStyle(): DesignStyle { const value = this.repo.setting('designStyle'); return designStyles.includes(value as DesignStyle) ? value as DesignStyle : 'dubbitig'; }
+  setDesignStyle(style: DesignStyle) { this.repo.setting('designStyle', z.enum(designStyles).parse(style)); }
   private closeAction(): CloseAction { const value = this.repo.setting('closeAction'); return closeActions.includes(value as CloseAction) ? value as CloseAction : 'tray'; }
   setCloseAction(action: CloseAction) { this.repo.setting('closeAction', z.enum(closeActions).parse(action)); }
   private backupPeriod(): BackupPeriod { const value = this.repo.setting('backupPeriod'); return backupPeriods.includes(value as BackupPeriod) ? value as BackupPeriod : 'daily'; }
@@ -324,5 +326,5 @@ export class ArchiveService {
   private signature() { return createHash('sha256').update(JSON.stringify(this.snapshot())).digest('hex'); }
   backups() { return readdirSync(this.backupPath).filter(n => /^sakli-.*\.sakli$/.test(n)).map(name => { const stat = statSync(join(this.backupPath, name)); return { name, date: stat.mtime.toISOString(), size: stat.size }; }).sort((a, b) => b.date.localeCompare(a.date)); }
   restoreBackup(name: string) { if (!this.backups().some(b => b.name === name)) throw new Error('Yedek bulunamadı.'); return this.importBytes(readFileSync(join(this.backupPath, name)), 'replace'); }
-  settings(): Settings { const last = this.repo.setting('lastAutoBackup') ?? this.repo.setting('lastBackup'); const next = last ? this.nextBackupAt(last).toISOString() : null; return { backupTime: this.backupTime(), closeAction: this.closeAction(), theme: this.repo.setting('theme') === 'light' ? 'light' : 'dark', autoBackup: this.repo.setting('autoBackup') !== 'false', backupPeriod: this.backupPeriod(), nextBackup: next, backupDue: !!next && new Date(next) <= new Date(), linkChecker: this.repo.setting('linkChecker') !== 'false', lastBackup: this.repo.setting('lastBackup') ?? null, backupError: this.backupError, dataPath: this.dataPath, backupPath: this.backupPath }; }
+  settings(): Settings { const last = this.repo.setting('lastAutoBackup') ?? this.repo.setting('lastBackup'); const next = last ? this.nextBackupAt(last).toISOString() : null; return { backupTime: this.backupTime(), closeAction: this.closeAction(), theme: this.repo.setting('theme') === 'light' ? 'light' : 'dark', designStyle: this.designStyle(), autoBackup: this.repo.setting('autoBackup') !== 'false', backupPeriod: this.backupPeriod(), nextBackup: next, backupDue: !!next && new Date(next) <= new Date(), linkChecker: this.repo.setting('linkChecker') !== 'false', lastBackup: this.repo.setting('lastBackup') ?? null, backupError: this.backupError, dataPath: this.dataPath, backupPath: this.backupPath }; }
 }

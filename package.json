@@ -20,6 +20,7 @@
     "test:features": "node tests/features-15.mjs",
     "test:features18": "node tests/features-18.mjs",
     "test:data-location": "node tests/data-location-desktop.mjs",
+    "test:styles": "node tests/design-styles.mjs",
     "test:tray-transfer": "node tests/tray-transfer.mjs",
     "screenshots": "node scripts/readme-screenshots.mjs"
   },

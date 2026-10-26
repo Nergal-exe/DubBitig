@@ -1,0 +1,191 @@
+/*
+ * Design styles: Fluent (Windows 11), macOS and Material 3, selected in Settings → General and stored per archive.
+ * Each style sets colour and shape tokens for light and dark (on <html data-style> and on settings previews with
+ * data-style-preview), then adjusts the components where the design systems visibly differ.
+ * Unlayered on purpose: these rules must win over the components layer and shadcn utilities.
+ * Fonts are only named, never downloaded; each stack falls back to a local font when the original is missing.
+ */
+
+/* ───────────── Fluent Design (Windows 11) ───────────── */
+:root[data-style="fluent"], [data-style-preview="fluent"] {
+  --rs:.55; --font-sans:"Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI", "Selawik", "Noto Sans", system-ui, sans-serif;
+  --btn-r:4px; --input-r:4px; --card-r:8px; --nav-r:4px; --dialog-r:8px;
+  --card-border:1px solid var(--line); --card-shadow:0 2px 4px var(--fl-shade); --nav-active-bg:var(--hover); --nav-active-ink:var(--ink);
+}
+:root[data-style="fluent"]:not([data-theme="light"]), [data-theme="dark"] [data-style-preview="fluent"] {
+  --canvas:#202020; --sidebar:#1c1c1c; --surface:#2b2b2b; --raised:#323232; --hover:#383838; --input:#2d2d2d;
+  --ink:#ffffff; --muted:#cfcfcf; --subtle:#a0a0a0; --line:#3d3d3d; --soft-line:#333333;
+  --accent:#60cdff; --accent-hover:#7ad5ff; --accent-ink:#002f45; --accent-soft:#1d3542; --accent-line:#2f6987;
+  --shadow:0 32px 64px #000a, 0 0 0 1px #0006; --shadow-sm:0 1px 0 #0004; --shadow-card:0 4px 8px #0006;
+  --fl-shade:#0005; --fl-bottom:#ffffff12; --fl-field-line:#9a9a9a;
+}
+:root[data-style="fluent"][data-theme="light"], [data-theme="light"] [data-style-preview="fluent"] {
+  --canvas:#f3f3f3; --sidebar:#eeeeee; --surface:#fbfbfb; --raised:#f5f5f5; --hover:#eaeaea; --input:#ffffff;
+  --ink:#1b1b1b; --muted:#5d5d5d; --subtle:#6f6f6f; --line:#e5e5e5; --soft-line:#ededed;
+  --accent:#005fb8; --accent-hover:#196ebf; --accent-ink:#ffffff; --accent-soft:#e1edf8; --accent-line:#9cc2e7;
+  --shadow:0 32px 64px #0000003d, 0 0 0 1px #0000000f; --shadow-sm:0 1px 0 #0000000d; --shadow-card:0 4px 8px #00000014;
+  --fl-shade:#0000000a; --fl-bottom:#00000024; --fl-field-line:#868686;
+}
+:root[data-style="fluent"] .page-title h1 { font-weight:600; letter-spacing:-.2px; }
+/* Buttons: flat fill with the darker bottom edge Windows 11 uses for elevation. */
+:root[data-style="fluent"] :is(button:not([class]), button.primary, button.small, button.danger-solid, [data-slot="button"]:not([data-size^="icon"])):not(:where(.detail-tags *, .editor-tag-options *, .schedule-shortcuts *, .attachment-list *, .reminder-list *, .history-list *, .kind-picker *, .empty-types *, .theme-picker *)) { border-radius:var(--btn-r); box-shadow:inset 0 -1px 0 var(--fl-bottom); }
+:root[data-style="fluent"] :is(button.primary, .new-entry, [data-slot="button"][data-variant="default"]) { box-shadow:inset 0 -1px 0 #0000003d; }
+/* Text boxes: neutral border with the accent underline on focus. */
+:root[data-style="fluent"] :is(input:not([type=checkbox]), textarea, .schedule-fields select, .setting-row label select) { border-radius:var(--input-r); border-bottom-color:var(--fl-field-line); }
+:root[data-style="fluent"] :is(input:not([type=checkbox]), textarea, .schedule-fields select):focus { border-color:var(--line); border-bottom-color:var(--accent); box-shadow:inset 0 -1px 0 var(--accent); background:var(--surface); }
+:root[data-style="fluent"] .search-box { border-radius:var(--input-r); border-bottom-color:var(--fl-field-line); }
+:root[data-style="fluent"] .search-box:focus-within { border-color:var(--line); border-bottom-color:var(--accent); box-shadow:inset 0 -1px 0 var(--accent); }
+/* Navigation: neutral selection with the short accent pill inside the item. */
+:root[data-style="fluent"] .nav-item { border-radius:var(--nav-r); }
+:root[data-style="fluent"] .nav-item.active { background:var(--nav-active-bg); font-weight:600; }
+:root[data-style="fluent"] .nav-item.active::before { left:0; top:9px; bottom:9px; width:3px; border-radius:3px; }
+:root[data-style="fluent"] .entry-card { box-shadow:var(--card-shadow); }
+:root[data-style="fluent"] .entry-card:hover { border-color:var(--line); background:var(--raised); }
+:root[data-style="fluent"] .archive-dialog { border-radius:var(--dialog-r); }
+:root[data-style="fluent"] :is(button, summary):focus-visible { outline:2px solid var(--ink); outline-offset:1px; }
+:root[data-style="fluent"] :is(input:not([type=checkbox]), textarea, .schedule-fields select):focus-visible { outline:none; }
+/* Toggle: outlined when off, filled accent when on. */
+:root[data-style="fluent"] .switch span { width:40px; height:20px; background:transparent; box-shadow:inset 0 0 0 1px var(--muted); }
+:root[data-style="fluent"] .switch input { width:40px; height:20px; }
+:root[data-style="fluent"] .switch span::after { width:12px; height:12px; left:4px; top:4px; background:var(--muted); box-shadow:none; transition:left .15s, transform .15s; }
+:root[data-style="fluent"] .switch input:checked+span { background:var(--accent); box-shadow:none; }
+:root[data-style="fluent"] .switch input:checked+span::after { left:24px; background:var(--accent-ink); }
+
+/* ───────────── macOS / native ───────────── */
+:root[data-style="macos"], [data-style-preview="macos"] {
+  --rs:.72; --font-sans:-apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro", "Inter", "Helvetica Neue", "Noto Sans", system-ui, sans-serif;
+  --btn-r:6px; --input-r:6px; --card-r:10px; --nav-r:6px; --dialog-r:12px;
+  --card-border:1px solid var(--line); --card-shadow:0 1px 2px #0000001a; --nav-active-bg:var(--accent); --nav-active-ink:#ffffff;
+}
+:root[data-style="macos"]:not([data-theme="light"]), [data-theme="dark"] [data-style-preview="macos"] {
+  --canvas:#1e1e1e; --sidebar:#2b2b2d; --surface:#262628; --raised:#323234; --hover:#3a3a3c; --input:#1c1c1e;
+  --ink:#ececec; --muted:#aeaeb2; --subtle:#8e8e93; --line:#3d3d40; --soft-line:#323235;
+  --accent:#0a84ff; --accent-hover:#409cff; --accent-ink:#ffffff; --accent-soft:#0f2a47; --accent-line:#1f5a99;
+  --shadow:0 22px 70px #0009, 0 0 0 .5px #ffffff26; --shadow-sm:0 .5px 1px #0006; --shadow-card:0 6px 18px #0006;
+  --mac-control:#3f3f42; --mac-control-edge:#ffffff1a;
+}
+:root[data-style="macos"][data-theme="light"], [data-theme="light"] [data-style-preview="macos"] {
+  --canvas:#f5f5f7; --sidebar:#e9e9ec; --surface:#ffffff; --raised:#f2f2f4; --hover:#e6e6eb; --input:#ffffff;
+  --ink:#1d1d1f; --muted:#5e5e63; --subtle:#78787d; --line:#d2d2d7; --soft-line:#e5e5ea;
+  --accent:#007aff; --accent-hover:#0068da; --accent-ink:#ffffff; --accent-soft:#e3efff; --accent-line:#9ec7ff;
+  --shadow:0 22px 70px #00000038, 0 0 0 .5px #0000002e; --shadow-sm:0 .5px 1px #0000002e; --shadow-card:0 6px 18px #0000001f;
+  --mac-control:#ffffff; --mac-control-edge:#0000001f;
+}
+:root[data-style="macos"] body { font-size:13px; }
+:root[data-style="macos"] .page-title h1 { font-size:24px; letter-spacing:-.4px; }
+:root[data-style="macos"] .sidebar { background:linear-gradient(var(--sidebar), color-mix(in srgb, var(--sidebar) 92%, var(--canvas))); }
+/* Push buttons: compact, light fill, hairline edge; the default button uses the system accent. */
+:root[data-style="macos"] :is(button:not([class]), button.primary, button.small, button.danger-solid, [data-slot="button"]:not([data-size^="icon"])):not(:where(.detail-tags *, .editor-tag-options *, .schedule-shortcuts *, .attachment-list *, .reminder-list *, .history-list *, .kind-picker *, .empty-types *, .theme-picker *)) { min-height:28px; padding:4px 12px; font-size:13px; border-radius:var(--btn-r); background:var(--mac-control); border-color:var(--mac-control-edge); box-shadow:var(--shadow-sm); }
+:root[data-style="macos"] :is(button.primary, .new-entry, [data-slot="button"][data-variant="default"]) { background:linear-gradient(color-mix(in srgb, var(--accent) 82%, #fff), var(--accent)); border-color:transparent; color:#fff; }
+:root[data-style="macos"] :is(button.primary, .new-entry):hover { filter:brightness(1.06); }
+:root[data-style="macos"] .new-entry { min-height:32px; }
+:root[data-style="macos"] :is(input:not([type=checkbox]), textarea, .schedule-fields select, .setting-row label select) { min-height:30px; padding-top:5px; padding-bottom:5px; border-radius:var(--input-r); font-size:13px; }
+/* The focus ring sits outside the field, as on macOS. */
+:root[data-style="macos"] :is(input:not([type=checkbox]), textarea, .schedule-fields select):focus,
+:root[data-style="macos"] .search-box:focus-within { border-color:var(--accent); box-shadow:0 0 0 3.5px color-mix(in srgb, var(--accent) 42%, transparent); }
+:root[data-style="macos"] .search-box { height:32px; border-radius:var(--input-r); }
+:root[data-style="macos"] :is(.select-chip, .view-toggle) { height:32px; }
+:root[data-style="macos"] :is(button, input, select, textarea, summary):focus-visible { outline:3px solid color-mix(in srgb, var(--accent) 50%, transparent); outline-offset:1px; }
+/* Sidebar selection: filled with the accent, white text. */
+:root[data-style="macos"] .nav-item { min-height:30px; border-radius:var(--nav-r); }
+:root[data-style="macos"] .nav-item.active { background:var(--nav-active-bg); color:var(--nav-active-ink); }
+:root[data-style="macos"] .nav-item.active::before { display:none; }
+:root[data-style="macos"] .nav-item.active>svg, :root[data-style="macos"] .nav-item.active .nav-count { color:var(--nav-active-ink); }
+:root[data-style="macos"] .entry-card { box-shadow:var(--card-shadow); }
+:root[data-style="macos"] .entry-card:hover { border-color:var(--line); box-shadow:var(--shadow-card); }
+:root[data-style="macos"] .archive-dialog { border-radius:var(--dialog-r); }
+:root[data-style="macos"] .modal-head h2 { font-size:15px; font-weight:600; }
+:root[data-style="macos"] .switch span { width:38px; height:22px; }
+:root[data-style="macos"] .switch input { width:38px; height:22px; }
+:root[data-style="macos"] .switch span::after { width:20px; height:20px; left:1px; top:1px; background:#fff; box-shadow:0 1px 2px #0000004d, 0 0 0 .5px #0000001f; }
+:root[data-style="macos"] .switch input:checked+span::after { left:17px; background:#fff; }
+
+/* ───────────── Material Design 3 ───────────── */
+:root[data-style="material"], [data-style-preview="material"] {
+  --rs:1.15; --font-sans:"Roboto", "Roboto Flex", "Noto Sans", system-ui, sans-serif;
+  --btn-r:99px; --input-r:4px; --card-r:12px; --nav-r:99px; --dialog-r:28px;
+  --card-border:0 solid transparent; --card-shadow:0 1px 2px #0000004d, 0 1px 3px 1px #00000026; --nav-active-bg:var(--accent-soft); --nav-active-ink:var(--md-on-secondary-container);
+}
+:root[data-style="material"]:not([data-theme="light"]), [data-theme="dark"] [data-style-preview="material"] {
+  --canvas:#141218; --sidebar:#1d1b20; --surface:#211f26; --raised:#2b2930; --hover:#36343b; --input:#1d1b20;
+  --ink:#e6e0e9; --muted:#cac4d0; --subtle:#938f99; --line:#49454f; --soft-line:#322f37;
+  --accent:#d0bcff; --accent-hover:#ddcdff; --accent-ink:#381e72; --accent-soft:#4a4458; --accent-line:#7a6e9a;
+  --shadow:0 8px 12px 6px #00000026, 0 4px 4px #0000004d; --shadow-sm:0 1px 2px #0000004d; --shadow-card:0 1px 2px #0000004d, 0 2px 6px 2px #00000026;
+  --md-on-secondary-container:#e8def8; --md-primary-container:#4f378b; --md-on-primary-container:#eaddff; --md-container-high:#2b2930;
+}
+:root[data-style="material"][data-theme="light"], [data-theme="light"] [data-style-preview="material"] {
+  --canvas:#fef7ff; --sidebar:#f7f2fa; --surface:#f7f2fa; --raised:#ece6f0; --hover:#e8e0ee; --input:#fef7ff;
+  --ink:#1d1b20; --muted:#49454f; --subtle:#6f6a77; --line:#cac4d0; --soft-line:#e7e0ec;
+  --accent:#6750a4; --accent-hover:#7965af; --accent-ink:#ffffff; --accent-soft:#e8def8; --accent-line:#b9a8e6;
+  --shadow:0 8px 12px 6px #00000026, 0 4px 4px #0000004d; --shadow-sm:0 1px 2px #0000004d; --shadow-card:0 1px 2px #0000004d, 0 2px 6px 2px #00000026;
+  --md-on-secondary-container:#1d192b; --md-primary-container:#eaddff; --md-on-primary-container:#21005d; --md-container-high:#ece6f0;
+}
+:root[data-style="material"] .page-title h1 { font-size:28px; font-weight:400; letter-spacing:0; }
+:root[data-style="material"] .modal-head h2 { font-size:22px; font-weight:400; letter-spacing:0; }
+/* Common buttons are pill shaped; filled for the main action, outlined otherwise. */
+:root[data-style="material"] :is(button:not([class]), button.primary, button.small, button.danger-solid, [data-slot="button"]:not([data-size^="icon"])):not(:where(.detail-tags *, .editor-tag-options *, .schedule-shortcuts *, .attachment-list *, .reminder-list *, .history-list *, .kind-picker *, .empty-types *, .theme-picker *)) { min-height:40px; padding:8px 20px; border-radius:var(--btn-r); border-color:var(--subtle); background:transparent; color:var(--accent); font-weight:500; letter-spacing:.1px; }
+:root[data-style="material"] :is(button.primary, [data-slot="button"][data-variant="default"]) { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+:root[data-style="material"] :is(button.danger-solid, [data-slot="button"][data-variant="destructive"]) { background:var(--danger-solid); border-color:var(--danger-solid); color:#fff; }
+:root[data-style="material"] :is(button:not([class]), button.primary, button.small, button.danger-solid, [data-slot="button"]:not([data-size^="icon"])):not(:where(.detail-tags *, .editor-tag-options *, .schedule-shortcuts *, .attachment-list *, .reminder-list *, .history-list *, .kind-picker *, .empty-types *, .theme-picker *)):hover { box-shadow:var(--shadow-sm); background-image:linear-gradient(color-mix(in srgb, currentColor 8%, transparent), color-mix(in srgb, currentColor 8%, transparent)); }
+:root[data-style="material"] button.icon-button { border-radius:99px; }
+/* Extended FAB for the main "new record" action. */
+:root[data-style="material"] .new-entry { min-height:56px; padding:0 20px; border-radius:16px; background:var(--md-primary-container); border-color:transparent; color:var(--md-on-primary-container); box-shadow:0 1px 3px #0000004d, 0 4px 8px 3px #00000026; font-weight:500; }
+:root[data-style="material"] .new-entry:hover { background:var(--md-primary-container); box-shadow:0 2px 3px #0000004d, 0 6px 10px 4px #00000026; }
+/* Outlined text fields. */
+:root[data-style="material"] :is(input:not([type=checkbox]), textarea, .schedule-fields select, .setting-row label select) { min-height:48px; border-radius:var(--input-r); border-color:var(--subtle); background:transparent; }
+:root[data-style="material"] :is(input:not([type=checkbox]), textarea, .schedule-fields select):focus { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+/* Search bar: full-pill, tonal, no outline. */
+:root[data-style="material"] .search-box { height:48px; border-radius:28px; border-color:transparent; background:var(--md-container-high); padding-left:18px; }
+:root[data-style="material"] .search-box:focus-within { border-color:transparent; box-shadow:0 1px 3px #0000004d; }
+:root[data-style="material"] :is(.select-chip, .view-toggle) { height:48px; border-radius:8px; }
+:root[data-style="material"] .filter-chip { border-radius:8px; }
+/* Navigation drawer: pill-shaped active indicator in the secondary container colour. */
+:root[data-style="material"] .nav-item { min-height:40px; padding:6px 14px; border-radius:var(--nav-r); }
+:root[data-style="material"] .nav-item.active { background:var(--nav-active-bg); color:var(--nav-active-ink); font-weight:600; }
+:root[data-style="material"] .nav-item.active::before { display:none; }
+:root[data-style="material"] .nav-item.active>svg { color:var(--nav-active-ink); }
+/* Elevated cards. */
+:root[data-style="material"] .entry-card { border:var(--card-border); border-radius:var(--card-r); background:var(--surface); box-shadow:var(--card-shadow); }
+:root[data-style="material"] .entry-card:hover { box-shadow:var(--shadow-card); }
+:root[data-style="material"] .entry-card.chosen { box-shadow:0 0 0 2px var(--accent), var(--shadow-card); }
+:root[data-style="material"] .archive-dialog { border:0; border-radius:var(--dialog-r); background:var(--md-container-high); }
+:root[data-style="material"] :is(.archive-dialog .modal-head, .archive-dialog .modal-actions) { background:var(--md-container-high); border-color:transparent; }
+/* Primary tabs with an underline indicator. */
+:root[data-style="material"] [data-slot="tabs-list"] { background:transparent; border-radius:0; border-bottom:1px solid var(--line); padding:0; height:48px; }
+:root[data-style="material"] [data-slot="tabs-trigger"] { height:100%; border:0; border-radius:0; background:transparent!important; box-shadow:none!important; }
+:root[data-style="material"] [data-slot="tabs-trigger"][data-state="active"] { color:var(--accent); box-shadow:inset 0 -3px 0 var(--accent)!important; }
+/* Switch: 52×32 track, outlined when off, larger handle when on. */
+:root[data-style="material"] .switch span { width:52px; height:32px; border-radius:99px; background:var(--md-container-high); box-shadow:inset 0 0 0 2px var(--subtle); }
+:root[data-style="material"] .switch input { width:52px; height:32px; }
+:root[data-style="material"] .switch span::after { width:16px; height:16px; left:8px; top:8px; background:var(--subtle); box-shadow:none; transition:all .15s; }
+:root[data-style="material"] .switch input:checked+span { background:var(--accent); box-shadow:none; }
+:root[data-style="material"] .switch input:checked+span::after { width:24px; height:24px; left:24px; top:4px; background:var(--accent-ink); }
+
+/* ───────────── Settings: style picker with live previews ───────────── */
+.style-picker { display:grid; grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); gap:12px; }
+.style-option { display:flex; flex-direction:column; align-items:stretch; gap:8px; padding:8px; min-height:0; text-align:left; background:var(--surface); border:1px solid var(--line); border-radius:12px; font-weight:400; }
+.style-option:hover { border-color:var(--accent-line); background:var(--surface); }
+.style-option[aria-pressed="true"] { border-color:var(--accent); box-shadow:0 0 0 1px var(--accent); }
+.style-option>strong { display:flex; align-items:center; justify-content:space-between; gap:6px; font-size:13px; padding:0 4px; color:var(--ink); }
+.style-option>strong svg { color:var(--accent); }
+.style-option>small { font-size:11.5px; color:var(--muted); padding:0 4px 2px; line-height:1.5; }
+/* The preview only uses tokens, so it renders each style independently of the active one. */
+.style-preview { display:flex; height:96px; overflow:hidden; border-radius:8px; background:var(--canvas); color:var(--ink); font:11px/1.3 var(--font-sans); border:1px solid var(--line); pointer-events:none; }
+.style-preview .sp-side { width:38%; padding:7px 5px; background:var(--sidebar); border-right:1px solid var(--line); display:flex; flex-direction:column; gap:3px; }
+.style-preview .sp-fab { height:14px; border-radius:min(var(--btn-r), 7px); background:var(--accent); margin-bottom:3px; }
+[data-style-preview="material"] .sp-fab { border-radius:5px; background:var(--md-primary-container); }
+.style-preview .sp-nav { height:10px; border-radius:min(var(--nav-r), 5px); background:var(--soft-line); }
+.style-preview .sp-nav.on { background:var(--nav-active-bg); }
+[data-style-preview="dubbitig"] .sp-nav.on, [data-style-preview="fluent"] .sp-nav.on { box-shadow:inset 2px 0 0 var(--accent); }
+.style-preview .sp-main { flex:1; padding:7px; display:flex; flex-direction:column; gap:5px; }
+.style-preview .sp-search { height:12px; border:1px solid var(--line); border-radius:min(var(--input-r), 6px); background:var(--input); }
+[data-style-preview="material"] .sp-search { border-color:transparent; background:var(--md-container-high); border-radius:6px; }
+[data-style-preview="fluent"] .sp-search { border-bottom-color:var(--fl-field-line); }
+.style-preview .sp-card { flex:1; padding:5px; border:var(--card-border); border-radius:calc(var(--card-r) * .55); background:var(--surface); box-shadow:var(--card-shadow); display:flex; flex-direction:column; gap:4px; }
+.style-preview .sp-line { height:4px; width:70%; border-radius:2px; background:var(--muted); opacity:.55; }
+.style-preview .sp-line.short { width:45%; opacity:.3; }
+.style-preview .sp-row { display:flex; justify-content:flex-end; gap:4px; margin-top:auto; }
+.style-preview .sp-btn { width:26px; height:10px; border:1px solid var(--line); border-radius:min(var(--btn-r), 5px); background:var(--surface); }
+.style-preview .sp-btn.primary { border-color:var(--accent); background:var(--accent); }
+.style-preview span { display:block; }
+.style-preview .sp-side, .style-preview .sp-main, .style-preview .sp-card, .style-preview .sp-row { display:flex; }
