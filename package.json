@@ -1,6 +1,6 @@
 {
   "name": "dubbitig",
-  "version": "1.9.1",
+  "version": "1.10.0",
   "description": "Komutların, bağlantıların, notların ve fotoğrafların için kişisel arşiv.",
   "author": "DubBitig",
   "main": "dist-electron/electron/main.js",
