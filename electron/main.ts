@@ -12,6 +12,7 @@ import { migrateDataLocation, resolveDataLocation, recoverRelocation, problemTex
 import { registerLinuxBrowserHost } from './linux-integration.js';
 import { checkUpdate, loginSupported, openAtLogin, setOpenAtLogin, startedHidden } from './system.js';
 import type { Entry, RelocationProgress } from '../src/shared/model.js';
+import type { LockInfo } from './data-location.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 // Windows uses the .ico; Linux trays and windows need a PNG.
@@ -30,6 +31,9 @@ let maintenance = false;
 let lock: { dir: string; id: string } | undefined;
 const platformName = (value: string) => value === 'win32' ? 'Windows' : value === 'linux' ? 'Linux' : value === 'darwin' ? 'macOS' : value;
 const errorText = (error: unknown) => error instanceof Error ? error.message : String(error);
+// Another OS cannot check whether the lock's process still runs, so a lock left by an unclean shutdown needs the user's word.
+const lockWarning = (dir: string, owner: LockInfo) => ({ type: 'warning' as const, title: 'Veri klasörü kullanımda olabilir', message: 'Bu veri klasörünü başka bir DubBitig kullanıyor olabilir.', detail: `${dir}\nSon açan: ${platformName(owner.platform)} · ${owner.hostname} · ${new Date(owner.startedAt).toLocaleString('tr-TR')}\n\nİki DubBitig aynı klasörü birlikte kullanırsa birinin değişiklikleri kaybolabilir. Diğer işletim sistemi hazırda bekletmedeyse veya Hızlı Başlatma ile kapatıldıysa önce oraya dönüp DubBitig’i kapat ve sistemi tamamen kapat.\n\nDiğer sistemde DubBitig açıkken bilgisayar yeniden başlatıldıysa bu kilit geride kalmış olabilir. Diğer DubBitig’in kapalı olduğundan eminsen devam edebilirsin.`, buttons: ['Vazgeç', 'Diğer DubBitig kapalı, devam et'], defaultId: 0, cancelId: 0 });
+const releaseDataLock = () => { if (lock) { releaseLock(lock.dir, lock.id); lock = undefined; } };
 // Resolves the archive folder before anything is opened. An unreachable custom folder (e.g. an unmounted NTFS
 // partition) is never replaced by a new empty archive; the user decides what to do.
 async function openDataLocation(root: string): Promise<string | undefined> {
@@ -41,7 +45,7 @@ async function openDataLocation(root: string): Promise<string | undefined> {
     const location = resolveDataLocation(root);
     if (!location.problem) {
       const owner = lockOwner(location.dir);
-      if (owner && dialog.showMessageBoxSync({ type: 'warning', title: 'Veri klasörü kullanımda olabilir', message: 'Bu veri klasörünü başka bir DubBitig kullanıyor olabilir.', detail: `${location.dir}\nSon açan: ${platformName(owner.platform)} · ${owner.hostname} · ${new Date(owner.startedAt).toLocaleString('tr-TR')}\n\nİki DubBitig aynı klasörü birlikte kullanırsa birinin değişiklikleri kaybolabilir. Diğer işletim sistemi hazırda bekletmedeyse veya Hızlı Başlatma ile kapatıldıysa önce oraya dönüp DubBitig’i kapat ve sistemi tamamen kapat.\n\nDiğer DubBitig’in kapalı olduğundan eminsen (ör. önceki oturum beklenmedik biçimde kapandıysa) devam edebilirsin.`, buttons: ['Çık', 'Diğer DubBitig kapalı, devam et'], defaultId: 0, cancelId: 0 }) !== 1) return undefined;
+      if (owner && dialog.showMessageBoxSync({ ...lockWarning(location.dir, owner), buttons: ['Çık', 'Diğer DubBitig kapalı, devam et'] }) !== 1) return undefined;
       lock = { dir: location.dir, id: acquireLock(location.dir).id };
       return location.dir;
     }
@@ -226,7 +230,7 @@ else {
       if (plan.kind === 'existing') {
         const info = await inspectArchive(plan.target);
         const owner = lockOwner(plan.target);
-        if (owner) throw new Error(`Seçilen klasörü şu anda başka bir DubBitig kullanıyor olabilir (${platformName(owner.platform)} · ${owner.hostname}). Önce onu kapat.`);
+        if (owner && (await dialog.showMessageBox(window, lockWarning(plan.target, owner))).response !== 1) return { status: 'canceled' };
         const mine = service.snapshot().entries.filter(e => !e.deletedAt).length;
         const choice = await dialog.showMessageBox(window, { type: 'question', title: 'Bu klasörde DubBitig arşivi var', message: `Seçilen klasörde ${info.active} kayıt içeren bir DubBitig arşivi bulundu.`, detail: `Konum: ${plan.target}\nSon değişiklik: ${info.updatedAt ? new Date(info.updatedAt).toLocaleString('tr-TR') : 'bilinmiyor'}${info.missingPhotos ? `\nUyarı: Bu arşivde ${info.missingPhotos} fotoğraf dosyası eksik.` : ''}\n\nŞu anki arşivinde ${mine} kayıt var. Bu veriler silinmez; ${service.dataPath} klasöründe kalır.\n\n• Bu arşivi kullan: DubBitig seçilen klasördeki kayıtlarla açılır.\n• Kayıtlarımı ekleyip kullan: Şu anki kayıtların fotoğraflarıyla seçilen arşive eklenir. Aynı kayıt iki yerde varsa daha yeni olan tutulur; aynı anda değişmiş farklı sürümler kopya olarak eklenir. Eklemeden önce seçilen arşivin güvenlik yedeği alınır.\n\nArdından DubBitig yeniden başlatılır.`, buttons: ['Vazgeç', 'Bu arşivi kullan', 'Kayıtlarımı ekleyip kullan'], defaultId: 1, cancelId: 0 });
         if (choice.response === 0) return { status: 'canceled' };
@@ -240,6 +244,8 @@ else {
             progress({ phase: 'merge', done: 1, total: 1 });
           }
           writePointer(root, plan.target, null);
+          // Taken over now, so the restart does not ask again; it is stale for this OS once this process exits.
+          if (owner) acquireLock(plan.target);
         } catch (error) { leaveMaintenance(); throw new Error('Veri konumu değiştirilmedi; şu anki veri klasörü kullanılmaya devam ediyor.\n' + errorText(error)); }
         await dialog.showMessageBox(window, { type: 'info', title: 'Veri konumu değiştirildi', message: choice.response === 2 ? 'Kayıtların seçilen arşive eklendi.' : 'Seçilen arşiv kullanılacak.', detail: `Yeni konum: ${plan.target}\nÖnceki klasör olduğu gibi duruyor: ${service.dataPath}\n\nDubBitig şimdi yeniden başlatılacak.`, buttons: ['Yeniden başlat'] });
         restart(); return { status: 'restarting' };
@@ -292,6 +298,7 @@ else {
     });
     // Windows shutdown must not be held up by close-to-tray behavior.
     window.on('query-session-end', () => { quitting = true; });
+    window.on('session-end', releaseDataLock);
     receiveArgs = async args => {
       try {
         const fileIndex=args.indexOf('--capture-file');
@@ -326,5 +333,8 @@ else {
     try { service.cleanupAssets(); } catch { /* Leftover files are retried on the next start. */ }
   }).catch(error => { dialog.showErrorBox('DubBitig başlatılamadı', String(error)); app.quit(); });
   app.on('window-all-closed', () => app.quit());
-  app.on('before-quit', () => { quitting = true; tray?.destroy(); tray = undefined; clearInterval(timer);clearInterval(inboxTimer);clearInterval(updateTimer);globalShortcut.unregisterAll(); if (service) { if (!maintenance) service.autoBackup(); service.repo.close(); service = undefined!; } if (lock) { releaseLock(lock.dir, lock.id); lock = undefined; } });
+  // Logging out or rebooting Linux sends SIGTERM/SIGHUP; quit normally so the data folder lock is removed.
+  for (const signal of ['SIGTERM', 'SIGHUP', 'SIGINT'] as const) process.on(signal, () => { quitting = true; app.quit(); });
+  process.on('exit', releaseDataLock);
+  app.on('before-quit', () => { quitting = true; tray?.destroy(); tray = undefined; clearInterval(timer);clearInterval(inboxTimer);clearInterval(updateTimer);globalShortcut.unregisterAll(); if (service) { if (!maintenance) service.autoBackup(); service.repo.close(); service = undefined!; } releaseDataLock(); });
 }
