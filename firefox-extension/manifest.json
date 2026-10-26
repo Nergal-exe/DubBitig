@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "DubBitig’e kaydet",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "description": "Seçili metinleri, komutları ve bağlantıları yerel DubBitig arşivine kaydet.",
   "browser_specific_settings": {
     "gecko": {
