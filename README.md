@@ -1,4 +1,4 @@
-# DubBitig 1.8
+# DubBitig 1.9
 
 Not, bağlantı, program ve komutlar için fotoğraf ekli Türkçe kişisel arşiv. Windows ve Linux'ta çalışır; Chrome ve Firefox eklentisiyle hızlı kayıt alır. DubBitig adı Sümerce Dub (Tablet) + Eski Türkçe Bitig (Yazı) birleşimidir.
 
@@ -52,7 +52,7 @@ GitHub'da yeni sürüm yayımlandığında Hakkında sekmesinde, Ayarlar düğme
 
 ## Kurulum ve veri konumu
 
-`release-dubbitig/DubBitig-1.8.0-Setup.exe` dosyasını çalıştırın. Kurulum yönetici izni ister; varsayılan uygulama konumu `C:\Program Files\DubBitig` olur. Eski sürümü kurulumdan önce kapatın. Setup önceki kullanıcı kurulumunu yükseltir; arşivi silmez. `DubBitig-Baslat.cmd` önce Program Files içindeki sürümü açar.
+`release-dubbitig/DubBitig-1.9.0-Setup.exe` dosyasını çalıştırın. Kurulum yönetici izni ister; varsayılan uygulama konumu `C:\Program Files\DubBitig` olur. Eski sürümü kurulumdan önce kapatın. Setup önceki kullanıcı kurulumunu yükseltir; arşivi silmez. `DubBitig-Baslat.cmd` önce Program Files içindeki sürümü açar.
 
 Veriler kullanıcıya özel `%APPDATA%\DubBitig` klasöründedir. Önceki `%APPDATA%\sakli` arşivi ilk açılışta fotoğrafları, ayarları ve yedekleriyle taşınır. Yeni konumda arşiv varsa üzerine yazılmaz. Chrome önceden yeni gelen kutusu oluşturduysa aşamalı taşıma yapılır; kesilen işlem sonraki açılışta tamamlanır. Çakışmada veriler korunarak hata gösterilir.
 
@@ -191,8 +191,8 @@ Linux paketleri GitHub Actions ile Ubuntu üzerinde derlenir (`.github/workflows
 **AppImage (bütün dağıtımlar, kurulum gerektirmez)**
 
 ```bash
-chmod +x DubBitig-1.8.0-x86_64.AppImage
-./DubBitig-1.8.0-x86_64.AppImage
+chmod +x DubBitig-1.9.0-x86_64.AppImage
+./DubBitig-1.9.0-x86_64.AppImage
 ```
 
 AppImage açılmazsa FUSE eksiktir: Ubuntu 22.04 ve sonrasında `sudo apt install libfuse2`, Fedora'da `sudo dnf install fuse-libs`. Uygulama menüsüne eklemek için AppImageLauncher veya Gear Lever kullanılabilir. Güncellemek için yeni `.AppImage` dosyasını eskisinin yerine koymanız yeterlidir.
@@ -200,14 +200,14 @@ AppImage açılmazsa FUSE eksiktir: Ubuntu 22.04 ve sonrasında `sudo apt instal
 **Debian / Ubuntu / Linux Mint / Pop!_OS (.deb)**
 
 ```bash
-sudo apt install ./DubBitig-1.8.0-amd64.deb
+sudo apt install ./DubBitig-1.9.0-amd64.deb
 ```
 
 Uygulama menüde **DubBitig** olarak görünür; terminalden `dubbitig` ile de açılır. Kaldırmak için `sudo apt remove dubbitig`.
 
 **Arch / CachyOS / Manjaro**
 
-Sürüm sayfasında `.pacman` dosyası varsa `sudo pacman -U DubBitig-x.y.z-x64.pacman` ile kurun; yoksa (1.8.0'da yoktur) kaynaktan derleyin: `cd packaging/arch && makepkg -si`. Paket `/opt/dubbitig` altına kurulur, `dubbitig` komutunu, uygulama menüsü kaydını ve simgeyi ekler; `sudo pacman -R dubbitig` ile kaldırılır.
+Sürüm sayfasında `.pacman` dosyası varsa `sudo pacman -U DubBitig-x.y.z-x64.pacman` ile kurun; yoksa kaynaktan derleyin: `cd packaging/arch && makepkg -si`. Paket `/opt/dubbitig` altına kurulur, `dubbitig` komutunu, uygulama menüsü kaydını ve simgeyi ekler; `sudo pacman -R dubbitig` ile kaldırılır.
 
 Hiçbir kurulum yöntemi arşivinizi silmez. Veriler `~/.config/DubBitig` altındadır: kayıtlar, fotoğraflar, `backups/` ve `capture-inbox/`.
 
