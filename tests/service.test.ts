@@ -329,3 +329,19 @@ test('günlük yedek seçilen saatte alınır', async () => {
     f.service.setBackupTime(''); assert.equal(f.service.settings().backupTime, '');
   } finally { f.close(); }
 });
+test('Dizi/Film ve Kitap kayıtları yalnızca ad, açıklama, bağlantı ve etiket taşır; bağlantı yinelenemez', async () => {
+  const f = await fixture(); try {
+    const list = (kind: 'movie' | 'book', title: string, url = ''): Draft => ({ ...draft(title), kind, content: '', category: '', url, tags: ['izlenecek'] });
+    const movie = f.service.save({ ...list('movie', 'Kurtlar Vadisi', 'imdb.com/title/tt0827573') });
+    assert.equal(movie.url, 'https://imdb.com/title/tt0827573');
+    f.service.save(list('book', 'Tutunamayanlar'));
+    assert.throws(() => f.service.save(list('movie', 'Başka ad', 'https://www.imdb.com/title/tt0827573/')), /dizi\/film zaten kayıtlı/);
+    // The same link may be both a book and a movie (e.g. an adaptation page).
+    f.service.save(list('book', 'Uyarlama', 'https://imdb.com/title/tt0827573'));
+    for (const extra of [{ content: 'Not içeriği' }, { category: 'Akşam' }, { expiresAt: new Date().toISOString() }]) assert.throws(() => f.service.save({ ...list('book', 'Fazla alan'), ...extra }), /yalnızca ad, açıklama, bağlantı ve etiketler/);
+    const files = unzipSync(f.service.exportBytes({ kind: 'types', types: ['movie'] }));
+    const manifest = JSON.parse(strFromU8(files['manifest.json']));
+    assert.deepEqual(manifest.entries.map((e: { title: string }) => e.title), ['Kurtlar Vadisi']);
+    const target = await fixture(); try { assert.equal(target.service.importBytes(f.service.exportBytes(), 'merge'), 3); assert.equal(target.service.snapshot().entries.filter(e => e.kind === 'book').length, 2); } finally { target.close(); }
+  } finally { f.close(); }
+});

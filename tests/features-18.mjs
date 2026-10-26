@@ -13,7 +13,8 @@ try {
   await page.waitForLoadState('networkidle');
   // The photo record type is gone from navigation and the type picker.
   await expect(page.getByRole('button', { name: /^Fotoğraflar/ })).toHaveCount(0);
-  const kindsInNav = await page.locator('.sidebar .nav-kind').count(); expect(kindsInNav).toBe(4);
+  const kindsInNav = await page.locator('.sidebar .nav-kind').count(); expect(kindsInNav).toBe(6);
+  await expect(page.getByRole('button', { name: /^Diziler\/Filmler/ })).toHaveCount(1); await expect(page.getByRole('button', { name: /^Kitaplar/ })).toHaveCount(1);
 
   // Bare addresses get https:// and duplicates are refused.
   await page.getByRole('button', { name: 'Yeni kayıt' }).click();

@@ -8,6 +8,7 @@
   --shadow:0 24px 70px #0008; --shadow-sm:0 1px 2px #0003; --shadow-card:0 10px 28px #0005;
   --command:#b4b9ff; --command-bg:#2b2d4a; --link:#8dcaec; --link-bg:#203648;
   --note:#e2c57a; --note-bg:#373224; --program:#8fd0bf; --program-bg:#1f3a36; --photo:#e1a9d6; --photo-bg:#3a2a3b;
+  --movie:#f2a48c; --movie-bg:#3d2a25; --book:#b3cf8f; --book-bg:#2c3625;
 }
 :root[data-theme="light"] {
   color-scheme: light;
@@ -19,4 +20,5 @@
   --shadow:0 24px 70px #152b4330; --shadow-sm:0 1px 2px #152b4310; --shadow-card:0 10px 26px #152b4316;
   --command:#5a4fb0; --command-bg:#efedfc; --link:#1f6890; --link-bg:#e6f2fa;
   --note:#86630f; --note-bg:#fbf3df; --program:#2c6c62; --program-bg:#e6f4f0; --photo:#94557f; --photo-bg:#f8ebf4;
+  --movie:#a3472f; --movie-bg:#fbece7; --book:#4f6d2b; --book-bg:#eef4e5;
 }
