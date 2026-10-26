@@ -44,8 +44,9 @@ export function captureFile(service: ArchiveService, path: string) {
   else base.description='Dosya konumu kaydedildi; dosyanın kendisi kopyalanmadı.';
   return saveOrReveal(service,base);
 }
-export function drainInbox(service: ArchiveService, onSaved:(e:Entry)=>void) {
-  const folder=join(service.dataPath,'capture-inbox');mkdirSync(folder,{recursive:true});
+// Browser bridges write to the local profile's inbox; a moved data folder keeps its own inbox as well.
+export function drainInbox(service: ArchiveService, onSaved:(e:Entry)=>void, folder=join(service.dataPath,'capture-inbox')) {
+  mkdirSync(folder,{recursive:true});
   for(const name of readdirSync(folder).filter(n=>/^[a-f0-9-]{36}\.json$/.test(n)).slice(0,100)) {
     const file=join(folder,name);const id=name.slice(0,-5);const receipt=join(folder,`${id}.result`);
     try {
