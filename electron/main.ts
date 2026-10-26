@@ -223,6 +223,7 @@ else {
         return { status: 'restarting' };
       } finally { updating = false; }
     });
+    handler('setDesignStyle', style => service.setDesignStyle(style));
     handler('setTheme', theme => { const value = z.enum(['light', 'dark']).parse(theme); repo.setting('theme', value); nativeTheme.themeSource = value; });
     handler('setAutoBackup', enabled => repo.setting('autoBackup', String(z.boolean().parse(enabled))));
     handler('openFolder', async kind => { z.enum(['data', 'backup', 'previous']).parse(kind); const folder = kind === 'data' ? service.dataPath : kind === 'backup' ? service.backupPath : previousCopy(); if (!folder) throw new Error('Eski veri klasörü bulunamadı.'); const error = await shell.openPath(folder); if (error) throw new Error(error); });

@@ -152,7 +152,7 @@ Taşıma sırasında uygulama kapanır veya elektrik kesilirse, yeni konum kayde
 - Kategoriler sol menüde listelenmez; **Kategorileri yönet** içinden yönetilir. Arama çubuğunun yanındaki kategori ve etiket filtreleri aramayla birlikte kullanılabilir; etkin filtreler tek tek kaldırılabilir. Kategori/etiket kaldırmak kayıtları silmez.
 - **Dizi/Film** ve **Kitap** türleri izleme ve okuma listesi içindir: yalnızca ad, açıklama, isteğe bağlı bağlantı (ör. IMDb, Goodreads) ve etiketler tutulur; kategori, içerik, fotoğraf ve hatırlatıcı yoktur. Aynı bağlantı aynı türde iki kez kaydedilemez.
 - Ayrıntı panelinde kayıt türüne göre ana eylem bulunur: komutta **Komutu kopyala**, bağlantıda ve bağlantısı olan dizi/film ve kitapta **Bağlantıyı aç**. Kart/liste görünümü tercihi hatırlanır.
-- Açık/koyu tema sol alttan seçilir. Arayüz React, Tailwind CSS ve shadcn/ui bileşenleri kullanır.
+- Açık/koyu tema sol alttan seçilir. **Ayarlar → Genel → Tema** bölümünden arayüzün tasarım dili seçilir: **DubBitig** (varsayılan), **Fluent (Windows 11)**, **macOS** ve **Material 3**. Her tema açık ve koyu görünümle birlikte çalışır; seçim arşivde saklanır (ortak veri klasöründe iki sistem de aynı temayı kullanır). Temalar ilgili tasarım sistemlerinden esinlenir: Fluent'te Windows 11 renkleri, sade köşeler ve alt çizgili metin kutuları; macOS'ta sistem mavisi, küçük kontroller ve dolu kenar çubuğu seçimi; Material 3'te hap düğmeler, genişletilmiş "Yeni kayıt" düğmesi, tonlu yüzeyler ve yükseltilmiş kartlar. Yazı tipleri indirilmez; Segoe UI, SF Pro veya Roboto yüklü değilse sistemdeki benzer yazı tipi kullanılır. Arayüz React, Tailwind CSS ve shadcn/ui bileşenleri kullanır.
 - Saatin yanındaki simge: aç, pencereyi gizle, panodakini kaydet, çıkış. Gizlenen pencerenin hatırlatıcıları çalışmaya devam eder. Pencerenin X düğmesi uygulamayı kapatmaz, sistem tepsisine gizler. Tamamen kapatmak için simgeye sağ tıklayıp Çıkış seçin. Uygulamayı yeniden açmak mevcut pencereyi gösterir. Windows açılışında otomatik başlatma etkin değildir.
 - **Hakkında** sekmesinde sürüm, güncelleme durumu, uygulamanın amacı ve adının anlamı bulunur. Yeni sürüm varsa **Güncellemeyi indir ve kur** ile kurulum biçimine uygun dosya (Setup.exe, AppImage, .deb veya .pacman) GitHub'dan indirilir, GitHub'ın yayımladığı boyut ve SHA-256 özetiyle doğrulanır, kurulur ve DubBitig yeniden açılır. Windows'ta kurulum arka planda çalışır ve yönetici izni ister; .deb/.pacman kurulumlarında parola penceresi (`pkexec`) açılır; AppImage dosyası yerinde değiştirilir. Taşınabilir (portable) sürüm ve geliştirme kopyası indirme sayfasını açar. Bu düğme 1.10.0 ile geldi; 1.9.x'ten 1.10.0'a geçiş bir kez elle yapılır.
 - Fotoğraflar not, bağlantı, program ve komut kayıtlarına eklenir (PNG/JPEG/WebP/GIF; fotoğraf başına 20 MB, kayıt başına 30 fotoğraf). Ayrı “Fotoğraf” kayıt türü 1.8 ile kaldırıldı; eski fotoğraf kayıtları fotoğraflarıyla birlikte nota dönüştürülür.
@@ -242,6 +242,7 @@ npm.cmd run test:desktop
 npm.cmd run test:features
 npm.cmd run test:features18
 npm.cmd run test:data-location
+npm.cmd run test:styles
 npm.cmd run test:tray-transfer
 npm.cmd run dist
 npm run dist:linux   # yalnızca Linux üzerinde
