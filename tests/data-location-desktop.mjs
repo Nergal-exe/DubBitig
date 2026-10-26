@@ -1,7 +1,8 @@
 // Ayarlar → Veriler → Veri konumunu değiştir akışı. Yerel klasör seçme ve onay pencereleri ana süreçte taklit edilir.
 // SAKLI_TEST_EXE paketlenmiş uygulamayı, SAKLI_TEST_ELECTRON ise sistemdeki Electron'u (ör. /usr/bin/electron44) kullanır.
 import { _electron as electron, expect } from '@playwright/test';
-import { mkdirSync, writeFileSync, existsSync, readFileSync, readdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync, existsSync, readFileSync, readdirSync, cpSync } from 'node:fs';
+import { hostname } from 'node:os';
 import path from 'node:path';
 const root = process.cwd();
 const base = path.join(root, '.test-data', `data-location-${Date.now()}`);
@@ -13,8 +14,9 @@ const env = { ...process.env, SAKLI_DATA_DIR: data }; delete env.ELECTRON_RUN_AS
 const exe = process.env.SAKLI_TEST_EXE ?? process.env.SAKLI_TEST_ELECTRON;
 const launch = () => electron.launch({ ...(exe ? { executablePath: exe, args: process.env.SAKLI_TEST_EXE ? [] : ['.'] } : { args: ['.'] }), cwd: root, env });
 const stubDialogs = (app, folder) => app.evaluate(({ dialog, app }, { folder, photo }) => {
+  globalThis.shownDialogs = [];
   dialog.showOpenDialog = async (_window, options) => ({ canceled: false, filePaths: [options.properties.includes('openDirectory') ? folder : photo] });
-  dialog.showMessageBox = async () => ({ response: 1, checkboxChecked: false });
+  dialog.showMessageBox = async (_window, options) => { globalThis.shownDialogs.push(options.title); return { response: 1, checkboxChecked: false }; };
   app.relaunch = () => {};
 }, { folder, photo });
 const openData = async page => {
@@ -56,7 +58,24 @@ try {
   await stubDialogs(app, shared);
   await page.getByRole('button', { name: 'Veri konumunu değiştir' }).click();
   await expect(page.getByText('Seçtiğin klasör zaten şu anki veri konumu.')).toBeVisible();
-  await app.close();
+  // An archive whose lock was left behind by the other OS (e.g. Linux rebooted while DubBitig was open).
+  const other = path.join(base, 'Diğer Disk', 'DubBitig');
+  cpSync(shared, other, { recursive: true });
+  writeFileSync(path.join(other, 'dubbitig.lock'), JSON.stringify({ id: 'diger-sistem', pid: 4242, platform: process.platform === 'win32' ? 'linux' : 'win32', hostname: hostname(), startedAt: new Date().toISOString() }));
+  await stubDialogs(app, other);
+  const switched = new Promise(resolve => app.once('close', resolve));
+  await page.getByRole('button', { name: 'Veri konumunu değiştir' }).click();
+  await switched;
+  if (JSON.parse(readFileSync(path.join(data, 'data-location.json'), 'utf8')).path !== other) throw new Error('Kilit uyarısından sonra geçiş yapılmadı.');
+  if (JSON.parse(readFileSync(path.join(other, 'dubbitig.lock'), 'utf8')).platform !== process.platform) throw new Error('Kilit devralınmadı.');
   if (existsSync(path.join(shared, 'dubbitig.lock'))) throw new Error('Kilit kapanışta kaldırılmadı.');
+  // The restart must not stop at a second lock warning (that would block before the window opens).
+  app = await launch(); page = await app.firstWindow(); await page.waitForLoadState('networkidle');
+  if ((await page.evaluate(() => window.sakli.settings())).dataPath !== other) throw new Error('Yeni klasör kullanılmıyor.');
+  // Logging out or rebooting Linux sends SIGTERM; the lock must not be left behind.
+  const terminated = new Promise(resolve => app.once('close', resolve));
+  app.process().kill('SIGTERM');
+  await terminated;
+  if (existsSync(path.join(other, 'dubbitig.lock'))) throw new Error('SIGTERM ile kapanışta kilit kaldı.');
   console.log('Veri konumu masaüstü testi geçti:', base);
 } catch (error) { await app.close().catch(() => {}); throw error; }
