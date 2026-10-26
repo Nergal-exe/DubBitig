@@ -75,6 +75,7 @@ Windows ile Linux'u aynı bilgisayarda (dual-boot) kullanıyorsanız arşivi iki
 - Windows **tamamen kapatılmış** olmalı: Hızlı Başlatma kapalı olmalı, hazırda bekletme kullanılmamalı (ayrıntılar aşağıda).
 - Linux'ta NTFS bölümü **yazılabilir** bağlı olmalı.
 - Klasörü OneDrive, Dropbox, Google Drive gibi senkronizasyon klasörlerine koymayın; bu araçlar dosyayı arka planda değiştirebilir.
+- İki sistemde de **aynı DubBitig sürümünü** kullanın. Eski bir sürüm, yeni sürümde eklenen kayıt türlerini (ör. 1.10'daki Dizi/Film ve Kitap) tanımaz; 1.9.x bu kayıtları görünce arayüz açılmayabilir.
 
 DubBitig veritabanını bellekte tutar ve her değişiklikte `sakli.sqlite` dosyasını geçici dosya + `fsync` + yeniden adlandırma ile baştan yazar; SQLite'ın kendi dosya kilitleri kullanılmaz. Bu yüzden iki DubBitig aynı dosyayı birlikte yazarsa son yazan diğerinin değişikliklerini silebilir. Bunu önlemek için:
 
@@ -149,10 +150,11 @@ Taşıma sırasında uygulama kapanır veya elektrik kesilirse, yeni konum kayde
 - Notlarda Markdown başlıkları, kalın/italik, listeler, tablolar, bağlantılar ve kod blokları kullanılır. Düzenle / Önizleme sekmeleri bulunur. HTML çalıştırılmaz; harici Markdown görselleri otomatik indirilmez, fotoğraf olarak eklenebilir.
 - Komutlarda otomatik veya seçili dilde sözdizimi vurgulaması vardır. PowerShell, Bash, CMD, JavaScript, TypeScript, Python, JSON, SQL, YAML, HTML/XML, CSS ve C# desteklenir. Komutlar çalıştırılmaz; özgün metin tek tıkla kopyalanır.
 - Kategoriler sol menüde listelenmez; **Kategorileri yönet** içinden yönetilir. Arama çubuğunun yanındaki kategori ve etiket filtreleri aramayla birlikte kullanılabilir; etkin filtreler tek tek kaldırılabilir. Kategori/etiket kaldırmak kayıtları silmez.
-- Ayrıntı panelinde kayıt türüne göre ana eylem bulunur: komutta **Komutu kopyala**, bağlantıda **Bağlantıyı aç**. Kart/liste görünümü tercihi hatırlanır.
+- **Dizi/Film** ve **Kitap** türleri izleme ve okuma listesi içindir: yalnızca ad, açıklama, isteğe bağlı bağlantı (ör. IMDb, Goodreads) ve etiketler tutulur; kategori, içerik, fotoğraf ve hatırlatıcı yoktur. Aynı bağlantı aynı türde iki kez kaydedilemez.
+- Ayrıntı panelinde kayıt türüne göre ana eylem bulunur: komutta **Komutu kopyala**, bağlantıda ve bağlantısı olan dizi/film ve kitapta **Bağlantıyı aç**. Kart/liste görünümü tercihi hatırlanır.
 - Açık/koyu tema sol alttan seçilir. Arayüz React, Tailwind CSS ve shadcn/ui bileşenleri kullanır.
 - Saatin yanındaki simge: aç, pencereyi gizle, panodakini kaydet, çıkış. Gizlenen pencerenin hatırlatıcıları çalışmaya devam eder. Pencerenin X düğmesi uygulamayı kapatmaz, sistem tepsisine gizler. Tamamen kapatmak için simgeye sağ tıklayıp Çıkış seçin. Uygulamayı yeniden açmak mevcut pencereyi gösterir. Windows açılışında otomatik başlatma etkin değildir.
-- **Hakkında** sekmesinde sürüm, güncelleme durumu, uygulamanın amacı ve adının anlamı bulunur.
+- **Hakkında** sekmesinde sürüm, güncelleme durumu, uygulamanın amacı ve adının anlamı bulunur. Yeni sürüm varsa **Güncellemeyi indir ve kur** ile kurulum biçimine uygun dosya (Setup.exe, AppImage, .deb veya .pacman) GitHub'dan indirilir, GitHub'ın yayımladığı boyut ve SHA-256 özetiyle doğrulanır, kurulur ve DubBitig yeniden açılır. Windows'ta kurulum arka planda çalışır ve yönetici izni ister; .deb/.pacman kurulumlarında parola penceresi (`pkexec`) açılır; AppImage dosyası yerinde değiştirilir. Taşınabilir (portable) sürüm ve geliştirme kopyası indirme sayfasını açar. Bu düğme 1.10.0 ile geldi; 1.9.x'ten 1.10.0'a geçiş bir kez elle yapılır.
 - Fotoğraflar not, bağlantı, program ve komut kayıtlarına eklenir (PNG/JPEG/WebP/GIF; fotoğraf başına 20 MB, kayıt başına 30 fotoğraf). Ayrı “Fotoğraf” kayıt türü 1.8 ile kaldırıldı; eski fotoğraf kayıtları fotoğraflarıyla birlikte nota dönüştürülür.
 - Aynı başlık, aynı bağlantı, aynı program web sitesi ve aynı komut ikinci kez kaydedilemez; form yazarken uyarır. Tarayıcıdan veya panodan gelen aynı içerik mevcut kaydı gösterir.
 - Bağlantı yazarken `https://` gerekmez; `ornek.com` gibi adreslerin başına otomatik eklenir.
@@ -162,7 +164,7 @@ Taşıma sırasında uygulama kapanır veya elektrik kesilirse, yeni konum kayde
 
 Ayarlar → Yedekleme: 30 dakika, günlük, haftalık veya aylık aralık seçilebilir. Günlük yedekte saat de seçilebilir; yedek o saatten sonraki ilk kontrolde alınır. Yedek klasörünün konumu aynı sekmede görünür. Değişiklik varsa yedek alınır; uygulama kapalıyken kaçırılan kontrol sonraki açılışta yapılır. Son 14 otomatik yedek tutulur; elle alınanlar korunur.
 
-Dışa aktarmada Tümünü dışa aktar, Kategorileri dışa aktar ve Kayıt türlerini dışa aktar seçenekleri vardır. Tek bir kategori/tür seçerek ayrı dosyaya, birden fazla seçerek tek dosyaya aktarabilirsiniz. Kayıt türleri: komut, program, bağlantı, not, fotoğraf. Kategori/tür aktarımları yalnızca aktif kayıtları ve bunlara ait fotoğrafları/geçmişi içerir. İçeri aktarma bu dosyaları özgün kategori ve türlerini koruyarak birleştirir. İstenirse Hedef kategoriye yeni kopyalar ekle kullanılabilir. Tam arşiv çöp kutusu ve geçmişi de içerir. Tek kategoriye içe aktarma yeni kopyalar oluşturur. Kategori veya kayıt türü dosyası bütün arşivin yerine geri yüklenemez. Tam geri yükleme önce güvenlik yedeği alır. `.sakli` ZIP arşiv sınırı 512 MB; yedekler şifrelenmez. Başka diske kopyalamak disk arızasına karşı koruma sağlar.
+Dışa aktarmada Tümünü dışa aktar, Kategorileri dışa aktar ve Kayıt türlerini dışa aktar seçenekleri vardır. Tek bir kategori/tür seçerek ayrı dosyaya, birden fazla seçerek tek dosyaya aktarabilirsiniz. Kayıt türleri: komut, program, bağlantı, not, dizi/film, kitap (eski arşivlerde fotoğraf). Kategori/tür aktarımları yalnızca aktif kayıtları ve bunlara ait fotoğrafları/geçmişi içerir. İçeri aktarma bu dosyaları özgün kategori ve türlerini koruyarak birleştirir. İstenirse Hedef kategoriye yeni kopyalar ekle kullanılabilir. Tam arşiv çöp kutusu ve geçmişi de içerir. Tek kategoriye içe aktarma yeni kopyalar oluşturur. Kategori veya kayıt türü dosyası bütün arşivin yerine geri yüklenemez. Tam geri yükleme önce güvenlik yedeği alır. `.sakli` ZIP arşiv sınırı 512 MB; yedekler şifrelenmez. Başka diske kopyalamak disk arızasına karşı koruma sağlar.
 
 Silinen kayıtlar önce **Çöp kutusu**na taşınır. Çöp kutusunda **Çöp kutusunu boşalt** ile tümü, kayıt ayrıntılarındaki kalıcı silme düğmesiyle tek kayıt kalıcı olarak silinir; yalnızca bu kayıtlara ait fotoğraflar da diskten kaldırılır. Daha önce alınmış yedeklerdeki kopyalar korunur. Hiçbir kayda ait olmayan, 1 günden eski fotoğraf ve önizleme dosyaları her açılışta ve **Ayarlar → Veriler → Kullanılmayan dosyaları temizle** ile silinir.
 
@@ -195,7 +197,7 @@ chmod +x DubBitig-1.9.1-x86_64.AppImage
 ./DubBitig-1.9.1-x86_64.AppImage
 ```
 
-AppImage açılmazsa FUSE eksiktir: Ubuntu 22.04 ve sonrasında `sudo apt install libfuse2`, Fedora'da `sudo dnf install fuse-libs`. Uygulama menüsüne eklemek için AppImageLauncher veya Gear Lever kullanılabilir. Güncellemek için yeni `.AppImage` dosyasını eskisinin yerine koymanız yeterlidir.
+AppImage açılmazsa FUSE eksiktir: Ubuntu 22.04 ve sonrasında `sudo apt install libfuse2`, Fedora'da `sudo dnf install fuse-libs`. Uygulama menüsüne eklemek için AppImageLauncher veya Gear Lever kullanılabilir. Güncellemek için Ayarlar → Hakkında → **Güncellemeyi indir ve kur** kullanın (AppImage dosyasının bulunduğu klasör yazılabilir olmalı) ya da yeni `.AppImage` dosyasını eskisinin yerine koyun.
 
 **Debian / Ubuntu / Linux Mint / Pop!_OS (.deb)**
 

@@ -10,7 +10,7 @@ import { transferScopeSchema } from '../src/shared/model.js';
 import { captureFile, clipboardRequest, saveCapture, drainInbox } from './capture.js';
 import { migrateDataLocation, resolveDataLocation, recoverRelocation, problemText, planRelocation, relocate, inspectArchive, findArchive, writePointer, readPointer, clearPrevious, lockOwner, acquireLock, releaseLock, hasArchive, samePath, formatBytes, minimumSpace, DATA_ITEMS } from './data-location.js';
 import { registerLinuxBrowserHost } from './linux-integration.js';
-import { checkUpdate, loginSupported, openAtLogin, setOpenAtLogin, startedHidden } from './system.js';
+import { checkUpdate, installUpdate, loginSupported, openAtLogin, setOpenAtLogin, startedHidden, updatePlan } from './system.js';
 import type { Entry, RelocationProgress } from '../src/shared/model.js';
 import type { LockInfo } from './data-location.js';
 
@@ -207,6 +207,22 @@ else {
     handler('setCloseAction', action => service.setCloseAction(action));
     handler('setOpenAtLogin', enabled => setOpenAtLogin(z.boolean().parse(enabled)));
     handler('checkUpdate', force => checkUpdate(z.boolean().optional().parse(force)));
+    let updating = false;
+    // Only the asset of the latest release that matches this installation is downloaded; nothing comes from the renderer.
+    handler('installUpdate', async () => {
+      if (updating) throw new Error('Güncelleme zaten indiriliyor.');
+      const plan = updatePlan();
+      if (!plan) throw new Error('Bu kurulumda otomatik güncelleme kullanılamıyor. Yeni sürümü indirme sayfasından alabilirsin.');
+      const how = plan.kind === 'nsis' ? 'DubBitig kapanır, kurulum arka planda yapılır ve bitince DubBitig yeniden açılır. Windows yönetici izni isteyecek.' : plan.kind === 'appimage' ? 'AppImage dosyası yeni sürümle değiştirilir ve DubBitig yeniden açılır.' : 'Paket sistemin paket yöneticisiyle kurulur; yönetici parolan istenir. Ardından DubBitig yeniden açılır.';
+      const r = await dialog.showMessageBox(window, { type: 'question', title: 'DubBitig’i güncelle', message: `DubBitig ${plan.latest} indirilip kurulacak.`, detail: `İndirilecek dosya: ${plan.asset.name} (${formatBytes(plan.asset.size)})\nDosya, GitHub’ın yayımladığı ${plan.asset.digest ? 'SHA-256 özeti ve boyutla' : 'boyutla'} doğrulandıktan sonra kurulur.\n\n${how}\n\nKayıtların, fotoğrafların ve ayarların korunur.`, buttons: ['Vazgeç', 'İndir ve kur'], defaultId: 1, cancelId: 0 });
+      if (r.response !== 1) return { status: 'canceled' };
+      updating = true;
+      try {
+        const result = await installUpdate(plan, value => { if (!window.isDestroyed()) window.webContents.send('sakli:update-progress', value); });
+        quitting = true; if (result.relaunch) app.relaunch(result.relaunch); app.quit();
+        return { status: 'restarting' };
+      } finally { updating = false; }
+    });
     handler('setTheme', theme => { const value = z.enum(['light', 'dark']).parse(theme); repo.setting('theme', value); nativeTheme.themeSource = value; });
     handler('setAutoBackup', enabled => repo.setting('autoBackup', String(z.boolean().parse(enabled))));
     handler('openFolder', async kind => { z.enum(['data', 'backup', 'previous']).parse(kind); const folder = kind === 'data' ? service.dataPath : kind === 'backup' ? service.backupPath : previousCopy(); if (!folder) throw new Error('Eski veri klasörü bulunamadı.'); const error = await shell.openPath(folder); if (error) throw new Error(error); });
@@ -327,7 +343,7 @@ else {
     const announceUpdate = () => void checkUpdate().then(info => {
       if (!info.available || !info.latest || repo.setting('updateNotified') === info.latest) return;
       repo.setting('updateNotified', info.latest);
-      try { showNotification('DubBitig güncellemesi var', `Sürüm ${info.latest} yayımlandı. Ayarlar → Hakkında bölümünden indirebilirsin.`); } catch { /* The About tab still shows it. */ }
+      try { showNotification('DubBitig güncellemesi var', `Sürüm ${info.latest} yayımlandı. Ayarlar → Hakkında bölümünden güncelleyebilirsin.`); } catch { /* The About tab still shows it. */ }
     });
     if (app.isPackaged) { setTimeout(announceUpdate, 15000); updateTimer = setInterval(announceUpdate, 24 * 3600 * 1000); }
     try { service.cleanupAssets(); } catch { /* Leftover files are retried on the next start. */ }

@@ -1,10 +1,13 @@
 import { z } from 'zod';
 
-export const kinds = ['command', 'program', 'link', 'note', 'photo'] as const;
+export const kinds = ['command', 'program', 'link', 'note', 'photo', 'movie', 'book'] as const;
 export type Kind = typeof kinds[number];
-export const labels: Record<Kind, string> = { command: 'Komut', program: 'Program', link: 'Bağlantı', note: 'Not', photo: 'Fotoğraf' };
+export const labels: Record<Kind, string> = { command: 'Komut', program: 'Program', link: 'Bağlantı', note: 'Not', photo: 'Fotoğraf', movie: 'Dizi/Film', book: 'Kitap' };
 // 'photo' stays readable for old archives, but new records attach photos to the other types.
-export const uiKinds = ['note', 'link', 'program', 'command'] as const satisfies readonly Kind[];
+export const uiKinds = ['note', 'link', 'program', 'command', 'movie', 'book'] as const satisfies readonly Kind[];
+// Watch and reading lists: only a name, description, optional link and tags.
+export const listKinds: readonly Kind[] = ['movie', 'book'];
+export const isListKind = (kind: Kind) => listKinds.includes(kind);
 // Adds https:// when a bare address such as example.com/yol is typed.
 export function normalizeUrl(value: string) {
   const v = value.trim();
@@ -18,6 +21,8 @@ export function duplicateKeys(d: Pick<Draft, 'kind' | 'title' | 'url' | 'content
   const keys: [string, string][] = [['title:' + fold(d.title), 'Bu başlıkla bir kayıt zaten var']];
   if (d.kind === 'link' && d.url) keys.push(['url:' + urlKey(d.url), 'Bu bağlantı zaten kayıtlı']);
   if (d.kind === 'program' && d.url) keys.push(['program-url:' + urlKey(d.url), 'Bu programın web sitesi zaten kayıtlı']);
+  if (d.kind === 'movie' && d.url) keys.push(['movie-url:' + urlKey(d.url), 'Bu bağlantıyla bir dizi/film zaten kayıtlı']);
+  if (d.kind === 'book' && d.url) keys.push(['book-url:' + urlKey(d.url), 'Bu bağlantıyla bir kitap zaten kayıtlı']);
   if (d.kind === 'command' && d.content.trim()) keys.push(['command:' + d.content.replace(/\s+/g, ' ').trim(), 'Bu komut zaten kayıtlı']);
   return keys;
 }
@@ -45,6 +50,7 @@ export const draftSchema = z.object({
   if (v.kind === 'command' && !v.content.trim()) ctx.addIssue({ code: 'custom', path: ['content'], message: 'Komut alanını doldur.' });
   if (v.kind === 'link' && !v.url) ctx.addIssue({ code: 'custom', path: ['url'], message: 'Bağlantı adresini doldur.' });
   if (v.kind === 'photo' && !v.assets.length) ctx.addIssue({ code: 'custom', path: ['assets'], message: 'En az bir fotoğraf ekle.' });
+  if (isListKind(v.kind) && (v.content || v.category || v.assets.length || v.reminder || v.expiresAt)) ctx.addIssue({ code: 'custom', path: ['kind'], message: `${labels[v.kind]} kayıtlarında yalnızca ad, açıklama, bağlantı ve etiketler bulunur.` });
 });
 export const historySchema = z.object({ id: z.string().uuid(), savedAt: z.string().datetime(), revision: z.number().int().positive(), draft: draftSchema });
 export type HistoryItem = z.infer<typeof historySchema>;
@@ -71,9 +77,10 @@ export interface ArchivePort {
   restoreRevision(id: string, revisionId: string): Promise<Entry>;
 }
 export interface AssetPort { addPhotos(): Promise<Asset[]>; image(id: string): Promise<string> }
-export interface UpdateInfo { current: string; latest: string | null; available: boolean; url: string; notes: string; checkedAt: string; error?: string }
+export interface UpdateInfo { current: string; latest: string | null; available: boolean; url: string; notes: string; checkedAt: string; error?: string; installable?: boolean }
+export interface UpdateProgress { done: number; total: number }
 export interface CleanupResult { entries?: number; files: number; bytes: number }
-export interface DesktopAPI { deleteAllData(confirmation: string):Promise<void>; emptyTrash(id?: string):Promise<CleanupResult & { entries: number }>; cleanupAssets():Promise<CleanupResult>; checkUpdate(force?: boolean):Promise<UpdateInfo>; setBackupTime(time: string):Promise<void>; setCloseAction(action: CloseAction):Promise<void>; setOpenAtLogin(enabled: boolean):Promise<void>; captureClipboard():Promise<Entry>; integrationFolder(browser?: 'chrome' | 'firefox'):Promise<void>; integrationWelcome():Promise<boolean>; onCaptured(callback:(value:{id:string;title:string})=>void):()=>void }
+export interface DesktopAPI { deleteAllData(confirmation: string):Promise<void>; emptyTrash(id?: string):Promise<CleanupResult & { entries: number }>; cleanupAssets():Promise<CleanupResult>; checkUpdate(force?: boolean):Promise<UpdateInfo>; setBackupTime(time: string):Promise<void>; setCloseAction(action: CloseAction):Promise<void>; setOpenAtLogin(enabled: boolean):Promise<void>; captureClipboard():Promise<Entry>; integrationFolder(browser?: 'chrome' | 'firefox'):Promise<void>; integrationWelcome():Promise<boolean>; installUpdate():Promise<{ status: 'canceled' | 'restarting' }>; onUpdateProgress(callback:(value:UpdateProgress)=>void):()=>void; onCaptured(callback:(value:{id:string;title:string})=>void):()=>void }
 export interface BackupPort { exportArchive(scope?: TransferScope): Promise<boolean>; importArchive(mode: 'merge' | 'replace', scope?: TransferScope): Promise<number | null>; backup(): Promise<void>; backups(): Promise<BackupInfo[]>; restoreBackup(name: string): Promise<number>; settings(): Promise<Settings>; setAutoBackup(enabled: boolean): Promise<void>; setTheme(theme: Theme): Promise<void> }
 export interface DesktopAPI extends ArchivePort, AssetPort, BackupPort, DataLocationPort { copy(text: string): Promise<void>; openUrl(url: string): Promise<void>; openFolder(kind: 'data' | 'backup' | 'previous'): Promise<void>; setBackupPeriod(period: BackupPeriod): Promise<void>; previewUrl(url: string): Promise<WebPreview>; checkLinks(id?: string): Promise<{ checked: number; broken: number }>; setLinkChecker(enabled: boolean): Promise<void>; testNotification(): Promise<void>; readNotice(id: string, noticeId: string): Promise<void> }
 // Future HTTP adapters implement ArchivePort/AssetPort. Sync transport remains optional.

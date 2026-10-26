@@ -1,6 +1,6 @@
 import { TransferPanel } from './components/transfer-panel';
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { Archive, ArrowCounterClockwise, ArrowSquareOut, ArrowsDownUp, Bell, Check, CheckCircle, Checks, Clock, Copy, DownloadSimple, FileText, Folder, FolderOpen, FunnelSimple, GearSix, GridFour, ImageSquare, Link as LinkIcon, List, MagnifyingGlass, Plus, ShieldCheck, SquaresFour, Star, Sun, Moon, Tag, TerminalWindow, Trash, UploadSimple, WarningCircle, X, PencilSimple, PlugsConnected } from '@phosphor-icons/react';
+import { Archive, ArrowCounterClockwise, ArrowSquareOut, ArrowsDownUp, Bell, BookOpen, Check, CheckCircle, Checks, Clock, Copy, DownloadSimple, FileText, FilmSlate, Folder, FolderOpen, FunnelSimple, GearSix, GridFour, ImageSquare, Link as LinkIcon, List, MagnifyingGlass, Plus, ShieldCheck, SquaresFour, Star, Sun, Moon, Tag, TerminalWindow, Trash, UploadSimple, WarningCircle, X, PencilSimple, PlugsConnected } from '@phosphor-icons/react';
 import { createPortal } from 'react-dom';
 import { AppWindow } from './components/window';
 import { Button } from './components/ui/button';
@@ -8,10 +8,10 @@ import { Typeahead, matches, type Suggestion } from './components/typeahead';
 import { ContentEditor, RichContent } from './components/rich-content';
 import { SettingsPanel } from './components/settings-panel';
 import { getAPI } from './api';
-import { draftSchema, duplicateKeys, kinds, labels, normalizeUrl, uiKinds, type Asset, type Draft, type Entry, type Kind, type Snapshot, type Theme, type UpdateInfo } from './shared/model';
+import { draftSchema, duplicateKeys, isListKind, kinds, labels, normalizeUrl, uiKinds, type Asset, type Draft, type Entry, type Kind, type Snapshot, type Theme, type UpdateInfo } from './shared/model';
 
-const typeIcons = { command: TerminalWindow, program: SquaresFour, link: LinkIcon, note: FileText, photo: ImageSquare };
-const plurals: Record<Kind, string> = { command: 'Komutlar', program: 'Programlar', link: 'Bağlantılar', note: 'Notlar', photo: 'Fotoğraflar' };
+const typeIcons = { command: TerminalWindow, program: SquaresFour, link: LinkIcon, note: FileText, photo: ImageSquare, movie: FilmSlate, book: BookOpen };
+const plurals: Record<Kind, string> = { command: 'Komutlar', program: 'Programlar', link: 'Bağlantılar', note: 'Notlar', photo: 'Fotoğraflar', movie: 'Diziler/Filmler', book: 'Kitaplar' };
 const blank = (kind: Kind = 'note'): Draft => ({ title: '', kind, description: '', content: '', url: '', category: '', tags: [], favorite: false, assets: [] });
 const date = (v: string) => new Date(v).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
 const dateTime = (v: string) => new Date(v).toLocaleString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -26,7 +26,8 @@ const searchText = (v: string) => v.toLocaleLowerCase('tr-TR').normalize('NFD').
 const plainText = (v: string) => v.replace(/```[\s\S]*?(```|$)/g, ' ').replace(/!\[[^\]]*\]\([^)]*\)/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/^\s{0,3}(#{1,6}|>|[-*+]|\d+\.)\s+/gm, '').replace(/(\*\*|__|~~|\*|`)(.+?)\1/g, '$2').replace(/\s+/g, ' ').trim();
 const isTyping = (target: EventTarget | null) => target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 function message(error: unknown) { return (error instanceof Error ? error.message : String(error)).replace(/^Error invoking remote method '[^']+': Error: /, ''); }
-function TypeIcon({ kind, size = 22 }: { kind: Kind; size?: number }) { const Icon = typeIcons[kind]; return <Icon size={size} />; }
+// A record type from a newer DubBitig (e.g. on the other OS sharing the data folder) falls back instead of crashing.
+function TypeIcon({ kind, size = 22 }: { kind: Kind; size?: number }) { const Icon = typeIcons[kind] ?? FileText; return <Icon size={size} />; }
 function Photo({ asset, className = '', onClick }: { asset: Asset; className?: string; onClick?: () => void }) {
   const [src, setSrc] = useState(''); const [failed, setFailed] = useState(false);
   useEffect(() => { let active = true; setSrc(''); setFailed(false); getAPI().image(asset.id).then(v => { if (active) setSrc(v); }).catch(() => { if (active) setFailed(true); }); return () => { active = false; }; }, [asset.id]);
@@ -117,7 +118,7 @@ export default function App() {
   const subtitle = section === 'trash' ? 'Sildiğin kayıtlar burada; istediğin zaman geri alabilirsin.' : section === 'favorites' ? 'Yıldızladığın kayıtlara hızlı erişim.' : section === 'broken' ? 'Denetimde 404 veya 410 yanıtı veren bağlantılar.' : 'Bilgini kaydet. İhtiyacın olduğunda bul.';
   const navigate = (next: string, cat = '') => { setSection(next); setCategory(cat); setSelected(null); setTag(''); };
   const newEntry = () => setEditor({ ...blank(kinds.includes(section as Kind) ? section as Kind : 'note'), category: category === '__none' ? '' : category });
-  const copyText = (entry: Entry) => entry.kind === 'link' ? entry.url : entry.content || entry.url || entry.description || entry.title;
+  const copyText = (entry: Entry) => entry.kind === 'link' ? entry.url : isListKind(entry.kind) ? entry.url || entry.title : entry.content || entry.url || entry.description || entry.title;
   const copy = (text: string) => run(() => getAPI().copy(text), 'Panoya kopyalandı.');
   const toggleFavorite = (entry: Entry) => run(() => getAPI().save({ ...entry, favorite: !entry.favorite }, entry.id), entry.favorite ? 'Favorilerden çıkarıldı.' : 'Favorilere eklendi.');
   const unread = alive.reduce((n, e) => n + (e.notices?.filter(v => !v.read).length ?? 0), 0);
@@ -206,11 +207,11 @@ export default function App() {
         {current.content && <div className="content-block"><div className="block-label">{current.kind === 'command' ? 'Komut' : current.kind === 'program' ? 'Kullanım notları' : 'İçerik'}<button className="icon-button" aria-label="İçeriği kopyala" title="Kopyala" onClick={() => copy(current.content)}><Copy size={16}/></button></div><RichContent draft={current}/></div>}
         {current.assets.length > 0 && <div className="detail-photos">{current.assets.map(a => <button key={a.id} className="photo-button" onClick={() => setLightbox(a)}><Photo asset={a}/><span>{a.name}</span></button>)}</div>}
         {['note', 'command'].includes(current.kind) && <button className="history-button" onClick={() => setHistoryId(current.id)}><Clock size={17}/> Sürüm geçmişi <span>{current.history?.length ?? 0}</span></button>}
-        <dl className="metadata"><div><dt><Folder size={15}/>Kategori</dt><dd>{current.category ? <button className="meta-link" onClick={() => { setCategory(current.category); setSelected(null); }}>{current.category}</button> : 'Kategorisiz'}</dd></div><div><dt><Clock size={15}/>Oluşturulma</dt><dd>{dateTime(current.createdAt)}</dd></div><div><dt><PencilSimple size={15}/>Düzenlenme</dt><dd>{dateTime(current.updatedAt)}</dd></div></dl>
+        <dl className="metadata">{!isListKind(current.kind) && <div><dt><Folder size={15}/>Kategori</dt><dd>{current.category ? <button className="meta-link" onClick={() => { setCategory(current.category); setSelected(null); }}>{current.category}</button> : 'Kategorisiz'}</dd></div>}<div><dt><Clock size={15}/>Oluşturulma</dt><dd>{dateTime(current.createdAt)}</dd></div><div><dt><PencilSimple size={15}/>Düzenlenme</dt><dd>{dateTime(current.updatedAt)}</dd></div></dl>
         {current.tags.length > 0 && <div className="detail-tags">{current.tags.map(t => <button key={t} title="Bu etiketle filtrele" onClick={() => { setTag(t); setSelected(null); }}>#{t}</button>)}</div>}
       </div>
       <div className="detail-actions">{current.deletedAt ? <><button className="primary" onClick={() => run(() => getAPI().trash(current.id, true), 'Kayıt geri alındı.')}><ArrowCounterClockwise size={18}/>Kaydı geri al</button><button className="danger icon-button bordered" aria-label="Kaydı kalıcı olarak sil" title="Kalıcı olarak sil" onClick={() => setPurge(current)}><Trash size={19}/></button></> : <>
-        {current.kind === 'link' ? <button className="primary" onClick={() => run(() => getAPI().openUrl(current.url))}><ArrowSquareOut size={18}/>Bağlantıyı aç</button> : <button className="primary" onClick={() => copy(copyText(current))}><Copy size={18}/>{current.kind === 'command' ? 'Komutu kopyala' : 'Kopyala'}</button>}
+        {current.kind === 'link' || isListKind(current.kind) && current.url ? <button className="primary" onClick={() => run(() => getAPI().openUrl(current.url))}><ArrowSquareOut size={18}/>Bağlantıyı aç</button> : <button className="primary" onClick={() => copy(copyText(current))}><Copy size={18}/>{current.kind === 'command' ? 'Komutu kopyala' : 'Kopyala'}</button>}
         <button onClick={() => setEditor(current)}><PencilSimple size={18}/>Düzenle</button>
         <button className="danger icon-button bordered" aria-label="Kaydı sil" title="Çöp kutusuna taşı" onClick={() => setConfirmDelete(current)}><Trash size={19}/></button>
       </>}</div>
@@ -246,13 +247,13 @@ function EntryCard({ entry, layout, flash, chosen, open, favorite, copy }: { ent
       <h3>{layout === 'list' && entry.assets[0] && <Photo asset={entry.assets[0]} className="list-thumb"/>}{entry.preview?.favicon && <Photo asset={entry.preview.favicon} className="site-favicon"/>}{entry.title}</h3>
       {entry.kind === 'command' && <pre className="command-preview"><span>›</span>{entry.content}</pre>}
       {cover && layout === 'grid' && <Photo asset={cover} className="card-photo"/>}
-      {entry.kind === 'link' && <span className="link-preview"><LinkIcon size={14}/>{entry.url.replace(/^https?:\/\/(www\.)?/, '')}</span>}
+      {(entry.kind === 'link' || isListKind(entry.kind) && entry.url) && <span className="link-preview"><LinkIcon size={14}/>{entry.url.replace(/^https?:\/\/(www\.)?/, '')}</span>}
       {summary && <span className="card-description">{summary}</span>}
       {(entry.reminder?.enabled || entry.expiresAt || entry.kind === 'link') && <span className="card-meta"><EntryDates entry={entry} compact/>{entry.kind === 'link' && <LinkStatus entry={entry}/>}</span>}
     </button>
     <div className="card-footer">
-      <span className="card-tags"><span className="card-category" title={entry.category || 'Kategorisiz'}><Folder size={13}/><span>{entry.category || 'Kategorisiz'}</span></span>{entry.tags.slice(0, 2).map(t => <span key={t}>#{t}</span>)}{entry.tags.length > 2 && <span>+{entry.tags.length - 2}</span>}</span>
-      <div>{!entry.deletedAt && <button className={`icon-button favorite ${entry.favorite ? 'is-favorite' : ''}`} title={entry.favorite ? 'Favorilerden çıkar' : 'Favorilere ekle'} aria-label={entry.favorite ? `${entry.title} favorilerden çıkar` : `${entry.title} favorilere ekle`} onClick={favorite}><Star size={17} weight={entry.favorite ? 'fill' : 'regular'}/></button>}<button className="icon-button" title={entry.deletedAt ? 'Geri al' : entry.kind === 'link' ? 'Bağlantıyı kopyala' : 'Kopyala'} aria-label={`${entry.title} ${entry.deletedAt ? 'geri al' : 'kopyala'}`} onClick={copy}>{entry.deletedAt ? <ArrowCounterClockwise size={17}/> : <Copy size={17}/>}</button></div>
+      <span className="card-tags">{!isListKind(entry.kind) && <span className="card-category" title={entry.category || 'Kategorisiz'}><Folder size={13}/><span>{entry.category || 'Kategorisiz'}</span></span>}{entry.tags.slice(0, 2).map(t => <span key={t}>#{t}</span>)}{entry.tags.length > 2 && <span>+{entry.tags.length - 2}</span>}</span>
+      <div>{!entry.deletedAt && <button className={`icon-button favorite ${entry.favorite ? 'is-favorite' : ''}`} title={entry.favorite ? 'Favorilerden çıkar' : 'Favorilere ekle'} aria-label={entry.favorite ? `${entry.title} favorilerden çıkar` : `${entry.title} favorilere ekle`} onClick={favorite}><Star size={17} weight={entry.favorite ? 'fill' : 'regular'}/></button>}<button className="icon-button" title={entry.deletedAt ? 'Geri al' : entry.kind === 'link' || isListKind(entry.kind) && entry.url ? 'Bağlantıyı kopyala' : 'Kopyala'} aria-label={`${entry.title} ${entry.deletedAt ? 'geri al' : 'kopyala'}`} onClick={copy}>{entry.deletedAt ? <ArrowCounterClockwise size={17}/> : <Copy size={17}/>}</button></div>
     </div>
   </article>;
 }
@@ -262,6 +263,7 @@ function EntryEditor({ initial, entries, categories, knownTags, close, saved }: 
   const [error, setError] = useState(''); const [busy, setBusy] = useState(false); const [discard, setDiscard] = useState(false);
   const [previewState, setPreviewState] = useState(''); const [previewAttempt, setPreviewAttempt] = useState(0); const [fetching, setFetching] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const list = isListKind(draft.kind);
   useEffect(() => {
     const url = normalizeUrl(draft.url);
     if (draft.kind !== 'link' || !/^https?:\/\/[^/]+\.[^/]+/i.test(url) || (draft.preview?.url === url && previewAttempt === 0)) return;
@@ -280,8 +282,8 @@ function EntryEditor({ initial, entries, categories, knownTags, close, saved }: 
     event.preventDefault(); if (busy || fetching) return; setError(''); setBusy(true);
     try {
       // Fields hidden by the chosen type must not be saved invisibly.
-      const hasUrl = draft.kind === 'link' || draft.kind === 'program';
-      const input = { ...draft, url: hasUrl ? normalizeUrl(draft.url) : '', preview: draft.kind === 'link' ? draft.preview : null, tags: [...new Set(tagValues)] };
+      const hasUrl = draft.kind === 'link' || draft.kind === 'program' || list;
+      const input = { ...draft, url: hasUrl ? normalizeUrl(draft.url) : '', preview: draft.kind === 'link' ? draft.preview : null, tags: [...new Set(tagValues)], ...(list ? { content: '', category: '', assets: [], reminder: null, expiresAt: null } : {}) };
       if (duplicate) throw new Error(`${duplicate.reason}: “${duplicate.entry.title}”${duplicate.entry.deletedAt ? ' (çöp kutusunda)' : ''}.`);
       const result = draftSchema.safeParse(input); if (!result.success) throw new Error(result.error.issues.map(i => i.message).join(' '));
       await saved(await getAPI().save(result.data, 'id' in initial ? initial.id : undefined));
@@ -289,19 +291,19 @@ function EntryEditor({ initial, entries, categories, knownTags, close, saved }: 
   };
   return <Modal title={'id' in initial ? 'Kaydı düzenle' : 'Yeni kayıt'} close={() => { if (!busy) requestClose(); }} wide><form ref={formRef} onSubmit={submit} onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 's' || e.key === 'Enter')) { e.preventDefault(); formRef.current?.requestSubmit(); } }}><div className="editor-body">
     <div className="kind-picker" role="group" aria-label="Kayıt türü">{uiKinds.map(k => <button key={k} type="button" aria-pressed={draft.kind === k} className={`${k} ${draft.kind === k ? 'active' : ''}`} onClick={() => update('kind', k)}><TypeIcon kind={k} size={18}/>{labels[k]}</button>)}</div>
-    {(draft.kind === 'link' || draft.kind === 'program') && <label>{draft.kind === 'program' ? 'Programın web sitesi' : 'Bağlantı *'}<input type="text" inputMode="url" spellCheck={false} required={draft.kind === 'link'} autoFocus={draft.kind === 'link'} maxLength={4000} placeholder="ornek.com" value={draft.url} onChange={e => update('url', e.target.value)} onBlur={() => { const url = normalizeUrl(draft.url); if (url !== draft.url) update('url', url); }}/>{draft.url && !/^[a-z][a-z0-9+.-]*:/i.test(draft.url.trim()) && normalizeUrl(draft.url) !== draft.url.trim() && <small>Kaydedilirken <strong>{normalizeUrl(draft.url)}</strong> olarak eklenecek.</small>}<FieldWarning duplicate={duplicate} keys={['url', 'program-url']}/></label>}
+    {(draft.kind === 'link' || draft.kind === 'program' || list) && <label>{draft.kind === 'program' ? 'Programın web sitesi' : list ? 'Bağlantı' : 'Bağlantı *'}<input type="text" inputMode="url" spellCheck={false} required={draft.kind === 'link'} autoFocus={draft.kind === 'link'} maxLength={4000} placeholder={draft.kind === 'movie' ? 'imdb.com/title/…' : draft.kind === 'book' ? 'goodreads.com/book/…' : 'ornek.com'} value={draft.url} onChange={e => update('url', e.target.value)} onBlur={() => { const url = normalizeUrl(draft.url); if (url !== draft.url) update('url', url); }}/>{draft.url && !/^[a-z][a-z0-9+.-]*:/i.test(draft.url.trim()) && normalizeUrl(draft.url) !== draft.url.trim() && <small>Kaydedilirken <strong>{normalizeUrl(draft.url)}</strong> olarak eklenecek.</small>}<FieldWarning duplicate={duplicate} keys={['url', 'program-url', 'movie-url', 'book-url']}/></label>}
     {draft.kind === 'link' && <div className="editor-preview"><p className="hint" role="status">{previewState || 'Bağlantıyı yapıştırınca başlık, site ikonu ve varsa önizleme otomatik alınır. Yazdığın başlık korunur.'}</p>{draft.preview?.url === normalizeUrl(draft.url) && <SitePreview draft={draft}/>}<button type="button" className="small" disabled={fetching || !draft.url} onClick={() => setPreviewAttempt(v => v + 1)}>Site bilgilerini yenile</button></div>}
-    <label>Başlık <span className="required">*</span><input autoFocus={draft.kind !== 'link'} required maxLength={200} value={draft.title} onChange={e => update('title', e.target.value)} placeholder={draft.kind === 'command' ? 'Örn. Çalışan işlemleri listele' : draft.kind === 'link' ? 'Örn. Tasarım kaynaklarım' : 'Kaydına bir isim ver'}/><FieldWarning duplicate={duplicate} keys={['title']}/></label>
-    <label>Açıklama<textarea rows={2} maxLength={10000} value={draft.description} onChange={e => update('description', e.target.value)} placeholder="Ne için kullanıyorsun? Hatırlamak istediğin ayrıntılar…"/></label>
-    <ContentEditor draft={draft} update={update}/>
+    <label>{draft.kind === 'movie' ? 'Dizi / film adı' : draft.kind === 'book' ? 'Kitap adı' : 'Başlık'} <span className="required">*</span><input autoFocus={draft.kind !== 'link'} required maxLength={200} value={draft.title} onChange={e => update('title', e.target.value)} placeholder={draft.kind === 'command' ? 'Örn. Çalışan işlemleri listele' : draft.kind === 'link' ? 'Örn. Tasarım kaynaklarım' : draft.kind === 'movie' ? 'Örn. Kurtlar Vadisi' : draft.kind === 'book' ? 'Örn. Tutunamayanlar' : 'Kaydına bir isim ver'}/><FieldWarning duplicate={duplicate} keys={['title']}/></label>
+    <label>Açıklama<textarea rows={list ? 4 : 2} maxLength={10000} value={draft.description} onChange={e => update('description', e.target.value)} placeholder={draft.kind === 'movie' ? 'Konusu, kim önerdi, izledin mi…' : draft.kind === 'book' ? 'Yazarı, kim önerdi, okudun mu…' : 'Ne için kullanıyorsun? Hatırlamak istediğin ayrıntılar…'}/></label>
+    {!list && <ContentEditor draft={draft} update={update}/>}
     <FieldWarning duplicate={duplicate} keys={['command']} block/>
-    <div className="form-columns">
-      <label>Kategori<Typeahead maxLength={80} value={draft.category} onValueChange={v => update('category', v)} items={matches(categories.filter(c => c !== draft.category), draft.category).map(c => ({ key: c, label: c, icon: <Folder size={14}/> }))} onPick={item => update('category', item.label)} placeholder="Seç veya yeni kategori yaz"/>{draft.category.trim() && !categories.includes(draft.category.trim()) && <small>Yeni kategori olarak eklenecek.</small>}</label>
+    <div className={list ? '' : 'form-columns'}>
+      {!list && <label>Kategori<Typeahead maxLength={80} value={draft.category} onValueChange={v => update('category', v)} items={matches(categories.filter(c => c !== draft.category), draft.category).map(c => ({ key: c, label: c, icon: <Folder size={14}/> }))} onPick={item => update('category', item.label)} placeholder="Seç veya yeni kategori yaz"/>{draft.category.trim() && !categories.includes(draft.category.trim()) && <small>Yeni kategori olarak eklenecek.</small>}</label>}
       <label>Etiketler<Typeahead value={tagText} onValueChange={setTagText} items={matches(knownTags.filter(t => !tagValues.includes(t)), tagText.split(',').pop() ?? '').map(t => ({ key: t, label: '#' + t, icon: <Tag size={14}/> }))} onPick={item => setTagText([...tagText.split(',').slice(0, -1).map(v => v.trim()).filter(Boolean), item.key].join(', ') + ', ')} placeholder="windows, iş, faydalı"/><small>Virgülle ayır; yazarken öneriler çıkar.</small></label>
     </div>
     {[...new Set([...knownTags, ...tagValues])].length > 0 && <div className="editor-tag-options">{[...new Set([...knownTags, ...tagValues])].sort((a, b) => a.localeCompare(b, 'tr')).map(t => { const chosen = tagValues.includes(t); return <button type="button" key={t} aria-pressed={chosen} aria-label={`${t} etiketini ${chosen ? 'kayıttan kaldır' : 'kayda ekle'}`} onClick={() => setTagText((chosen ? tagValues.filter(v => v !== t) : [...tagValues, t]).join(', '))}>#{t}{chosen ? <X size={11}/> : <Plus size={11}/>}</button>; })}</div>}
-    <section className="editor-section"><div className="attachment-heading"><span><ImageSquare size={18}/>Fotoğraflar {draft.assets.length > 0 && <small>({draft.assets.length}/30)</small>}</span><button type="button" className="small" disabled={busy} onClick={async () => { setBusy(true); try { const photos = await getAPI().addPhotos(); if (draft.assets.length + photos.length > 30) throw new Error('Bir kayda en fazla 30 fotoğraf ekleyebilirsin.'); update('assets', [...draft.assets, ...photos]); } catch (e) { setError(message(e)); } finally { setBusy(false); } }}><Plus size={15}/>Fotoğraf ekle</button></div>{draft.assets.length ? <div className="attachment-list">{draft.assets.map(asset => <div key={asset.id}><Photo asset={asset}/><span>{asset.name}<small>{size(asset.size)}</small></span><button type="button" className="icon-button" aria-label={`${asset.name} kaldır`} onClick={() => update('assets', draft.assets.filter(a => a.id !== asset.id))}><X size={16}/></button></div>)}</div> : <p className="attachment-hint">PNG, JPEG, WebP veya GIF · Dosya başına en fazla 20 MB{draft.kind === 'photo' && ' · Bu kayıt türünde en az bir fotoğraf gerekir'}</p>}</section>
-    <ScheduleFields draft={draft} update={update}/>
+    {!list && <section className="editor-section"><div className="attachment-heading"><span><ImageSquare size={18}/>Fotoğraflar {draft.assets.length > 0 && <small>({draft.assets.length}/30)</small>}</span><button type="button" className="small" disabled={busy} onClick={async () => { setBusy(true); try { const photos = await getAPI().addPhotos(); if (draft.assets.length + photos.length > 30) throw new Error('Bir kayda en fazla 30 fotoğraf ekleyebilirsin.'); update('assets', [...draft.assets, ...photos]); } catch (e) { setError(message(e)); } finally { setBusy(false); } }}><Plus size={15}/>Fotoğraf ekle</button></div>{draft.assets.length ? <div className="attachment-list">{draft.assets.map(asset => <div key={asset.id}><Photo asset={asset}/><span>{asset.name}<small>{size(asset.size)}</small></span><button type="button" className="icon-button" aria-label={`${asset.name} kaldır`} onClick={() => update('assets', draft.assets.filter(a => a.id !== asset.id))}><X size={16}/></button></div>)}</div> : <p className="attachment-hint">PNG, JPEG, WebP veya GIF · Dosya başına en fazla 20 MB{draft.kind === 'photo' && ' · Bu kayıt türünde en az bir fotoğraf gerekir'}</p>}</section>}
+    {!list && <ScheduleFields draft={draft} update={update}/>}
     <label className="checkbox-row"><input type="checkbox" checked={draft.favorite} onChange={e => update('favorite', e.target.checked)}/><Star size={17} weight={draft.favorite ? 'fill' : 'regular'}/>Favorilere ekle</label>
     {error && <p className="form-error" role="alert"><WarningCircle size={19}/>{error}</p>}
   </div>
