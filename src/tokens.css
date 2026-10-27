@@ -1,11 +1,10 @@
-/* Shape tokens. Design styles (design-styles.css) override these and the colours below; a settings preview
-   carries data-style-preview so each preview shows its own style whichever one is active. */
-:root, [data-style-preview="dubbitig"] {
+/* Shape tokens; design styles (design-styles.css) override these and the colours below. */
+:root {
   --rs:1; --font-sans:"Segoe UI Variable Text", "Segoe UI Variable", "Segoe UI", sans-serif;
   --btn-r:9px; --input-r:9px; --card-r:14px; --nav-r:9px; --dialog-r:16px;
   --card-border:1px solid var(--line); --card-shadow:none; --nav-active-bg:var(--accent-soft); --nav-active-ink:var(--ink);
 }
-:root, :root[data-theme="dark"], [data-theme="dark"] [data-style-preview="dubbitig"] {
+:root, :root[data-theme="dark"] {
   color-scheme: dark;
   --canvas:#0f1521; --sidebar:#121a28; --surface:#172131; --raised:#1f2a3d; --hover:#25324a; --input:#111a29;
   --ink:#e9edf4; --muted:#a3aec0; --subtle:#7f8ca1; --line:#2a3548; --soft-line:#222c3d;
@@ -17,7 +16,7 @@
   --note:#e2c57a; --note-bg:#373224; --program:#8fd0bf; --program-bg:#1f3a36; --photo:#e1a9d6; --photo-bg:#3a2a3b;
   --movie:#f2a48c; --movie-bg:#3d2a25; --book:#b3cf8f; --book-bg:#2c3625;
 }
-:root[data-theme="light"], [data-theme="light"] [data-style-preview="dubbitig"] {
+:root[data-theme="light"] {
   color-scheme: light;
   --canvas:#f4f6fa; --sidebar:#fbfcfe; --surface:#ffffff; --raised:#eef2f8; --hover:#e6ecf6; --input:#f8fafd;
   --ink:#1f2836; --muted:#566377; --subtle:#6e7b90; --line:#dbe1ea; --soft-line:#e8ecf2;

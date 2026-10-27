@@ -1,0 +1,463 @@
+{
+  "meta": {
+    "name": "Material Design 3",
+    "description": "Material 3 (baseline scheme) for DubBitig: tonal surface containers instead of heavy shadows, pill buttons, an extended FAB, a navigation drawer with a pill indicator and state layers for feedback.",
+    "source_references": [
+      "m3.material.io: Color roles and the baseline (purple) scheme, light and dark",
+      "m3.material.io: Typography type scale tokens (Roboto)",
+      "m3.material.io: Shape scale (none, extra-small 4, small 8, medium 12, large 16, extra-large 28, full)",
+      "m3.material.io: Elevation levels 0–5 and tonal surface containers",
+      "m3.material.io: Motion easing and duration tokens; Interaction states (state layers 8/10/10%)",
+      "m3.material.io components: Buttons, FAB, Navigation drawer, Cards, Text fields, Search, Tabs, Switch, Dialogs, Menus",
+      "UI/UX Pro Max styles.csv: material-you-md3-mobile ('tonal elevation instead of strong shadows', 'state layers instead of opacity hacks', 'emphasized easing', 'no pure white background')"
+    ],
+    "created_at": "2026-10-27"
+  },
+  "design_system": {
+    "color": {
+      "palette_type": "analogous tonal palette generated from one seed (baseline violet)",
+      "primary": {
+        "hex": "#6750A4",
+        "role": "primary: filled buttons, active tab indicator, focused field outline, switch track"
+      },
+      "secondary": {
+        "hex": "#E8DEF8",
+        "role": "secondaryContainer: navigation drawer active indicator, selected chips"
+      },
+      "accent": {
+        "hex": "#EADDFF",
+        "role": "primaryContainer: extended FAB (main create action)"
+      },
+      "neutral": {
+        "scale": [
+          "#FFFFFF",
+          "#FEF7FF",
+          "#F7F2FA",
+          "#F3EDF7",
+          "#ECE6F0",
+          "#E6E0E9",
+          "#CAC4D0",
+          "#79747E",
+          "#6F6A77",
+          "#49454F",
+          "#1D1B20"
+        ],
+        "usage": "#FEF7FF surface (window); #F7F2FA surfaceContainerLow (drawer, elevated cards); #F3EDF7 surfaceContainer; #ECE6F0 surfaceContainerHigh (search bar, dialogs); #E6E0E9 surfaceContainerHighest (filled fields, hover); #CAC4D0 outlineVariant (dividers); #79747E outline (field and outlined-button borders); #6F6A77 hint text; #49454F onSurfaceVariant (secondary text); #1D1B20 onSurface (text)"
+      },
+      "semantic": {
+        "success": "#386A20",
+        "warning": "#7D5700",
+        "error": "#B3261E",
+        "info": "#6750A4"
+      },
+      "surface": {
+        "background": "#FEF7FF",
+        "card": "#F7F2FA",
+        "elevated": "#ECE6F0"
+      },
+      "contrast_strategy": "tonal layers: each container tier is a step darker (light) or lighter (dark); on-colours guarantee 4.5:1",
+      "on_colors": {
+        "on_primary": "#FFFFFF",
+        "on_primary_container": "#21005D",
+        "on_secondary_container": "#1D192B"
+      },
+      "dark_mode": {
+        "primary": "#D0BCFF",
+        "secondary": "#4A4458",
+        "accent": "#4F378B",
+        "on_accent": "#381E72",
+        "on_primary_container": "#EADDFF",
+        "on_secondary_container": "#E8DEF8",
+        "neutral_scale": [
+          "#E6E0E9",
+          "#CAC4D0",
+          "#938F99",
+          "#49454F",
+          "#36343B",
+          "#322F37",
+          "#2B2930",
+          "#211F26",
+          "#1D1B20",
+          "#141218",
+          "#0F0D13"
+        ],
+        "neutral_usage": "#141218 surface; #1D1B20 surfaceContainerLow; #211F26 surfaceContainer; #2B2930 surfaceContainerHigh; #36343B surfaceContainerHighest / hover; #49454F outlineVariant; #938F99 outline and hint text; #CAC4D0 onSurfaceVariant; #E6E0E9 onSurface",
+        "semantic": {
+          "success": "#9CD67D",
+          "warning": "#F8BD42",
+          "error": "#F2B8B5",
+          "info": "#D0BCFF"
+        },
+        "surface": {
+          "background": "#141218",
+          "card": "#1D1B20",
+          "elevated": "#2B2930"
+        },
+        "accent_line": "#7A6E9A",
+        "primary_hover": "#DDCDFF"
+      },
+      "accent_line_light": "#B9A8E6",
+      "primary_hover_light": "#7965AF",
+      "accessible_text_variants": {
+        "note": "Official values below WCAG AA 4.5:1 as text on these surfaces, nudged toward black (light) or white (dark) keeping the hue; enforced by tests/design-dna.test.ts.",
+        "light": {
+          "subtle": {
+            "official": "#6F6A77",
+            "used": "#6B6673"
+          }
+        }
+      }
+    },
+    "typography": {
+      "type_scale": {
+        "display": {
+          "size": "57px",
+          "weight": "400",
+          "line_height": "64px",
+          "tracking": "-0.25px"
+        },
+        "heading_1": {
+          "size": "28px",
+          "weight": "400",
+          "line_height": "36px",
+          "tracking": "0"
+        },
+        "heading_2": {
+          "size": "22px",
+          "weight": "400",
+          "line_height": "28px",
+          "tracking": "0"
+        },
+        "heading_3": {
+          "size": "16px",
+          "weight": "500",
+          "line_height": "24px",
+          "tracking": "0.15px"
+        },
+        "body": {
+          "size": "14px",
+          "weight": "400",
+          "line_height": "20px",
+          "tracking": "0.25px"
+        },
+        "body_small": {
+          "size": "12px",
+          "weight": "400",
+          "line_height": "16px",
+          "tracking": "0.4px"
+        },
+        "caption": {
+          "size": "12px",
+          "weight": "500",
+          "line_height": "16px",
+          "tracking": "0.5px"
+        },
+        "overline": {
+          "size": "11px",
+          "weight": "500",
+          "line_height": "16px",
+          "tracking": "0.5px"
+        }
+      },
+      "font_families": {
+        "heading": "\"Roboto Flex\", \"Roboto\", \"Noto Sans\", system-ui, sans-serif",
+        "body": "\"Roboto Flex\", \"Roboto\", \"Noto Sans\", system-ui, sans-serif",
+        "mono": "\"Roboto Mono\", \"Cascadia Mono\", ui-monospace, monospace"
+      },
+      "font_style_notes": "Geometric-humanist Roboto; headlines and titles are regular weight (hierarchy by size), labels are medium 500 with positive tracking."
+    },
+    "spacing": {
+      "base_unit": "4px",
+      "scale": [
+        "4px",
+        "8px",
+        "12px",
+        "16px",
+        "24px",
+        "28px",
+        "32px",
+        "48px",
+        "56px"
+      ],
+      "content_density": "comfortable",
+      "section_rhythm": "16px inside containers, 24px between cards, 56px top-level touch targets"
+    },
+    "layout": {
+      "grid_system": "Canonical list-detail layout with a standard navigation drawer",
+      "max_content_width": "none (expanded window class)",
+      "columns": "3 (drawer, list, detail)",
+      "gutter": "16px",
+      "breakpoints": {
+        "compact": "600px",
+        "medium": "840px",
+        "expanded": "1200px",
+        "large": "1600px"
+      },
+      "alignment_tendency": "strict grid"
+    },
+    "shape": {
+      "border_radius": {
+        "small": "4px",
+        "medium": "12px",
+        "large": "16px",
+        "pill": "9999px"
+      },
+      "border_usage": "only on outlined components (outlined buttons, text fields, chips); containers are separated by tone",
+      "divider_style": "1px outlineVariant, used rarely"
+    },
+    "elevation": {
+      "shadow_style": "layered but light; tone carries most of the depth",
+      "levels": {
+        "low": "0 1px 2px #0000004D, 0 1px 3px 1px #00000026",
+        "medium": "0 1px 3px #0000004D, 0 4px 8px 3px #00000026",
+        "high": "0 4px 4px #0000004D, 0 8px 12px 6px #00000026"
+      },
+      "depth_cues": "color intensity (surface container tiers) first, shadow levels 1–3 second"
+    },
+    "iconography": {
+      "style": "Material Symbols outlined, filled when selected",
+      "stroke_weight": "400 weight, optical size 20–24",
+      "size_scale": [
+        "18px",
+        "20px",
+        "24px"
+      ],
+      "preferred_set": "Material Symbols (app keeps Phosphor/Lucide regular weight)"
+    },
+    "motion": {
+      "easing": "cubic-bezier(0.2, 0, 0, 1)",
+      "duration_scale": {
+        "micro": "100ms",
+        "normal": "300ms",
+        "macro": "500ms"
+      },
+      "entrance_pattern": "emphasized decelerate cubic-bezier(0.05, 0.7, 0.1, 1), 400ms, container transform",
+      "exit_pattern": "emphasized accelerate cubic-bezier(0.3, 0, 0.8, 0.15), 200ms",
+      "philosophy": "expressive but purposeful"
+    },
+    "components": {
+      "button_style": "Filled: primary fill, onPrimary label, 40px high, full pill, label large 14/500. Outlined: 1px outline, primary label. Hover adds an 8% state layer of the label colour, press 10%.",
+      "input_style": "Outlined text field: 4px radius, 1px outline; focus = 2px primary outline; no background fill.",
+      "card_style": "Elevated card: surfaceContainerLow, 12px radius, elevation level 1, no border; hover raises to level 2.",
+      "navigation_pattern": "Standard navigation drawer on surfaceContainerLow; items 40px (desktop density: the M3 spec uses 56dp, reduced so the 16-item drawer fits the default 940px window), full-pill active indicator in secondaryContainer with onSecondaryContainer label; extended FAB (primaryContainer, 16px radius, 56px) above the list.",
+      "modal_style": "Dialog: surfaceContainerHigh, 28px radius, level 3, headline small 24px regular title.",
+      "list_style": "One-line list items 56px; state-layer hover.",
+      "component_notes": "Search bar: 56px, full pill, surfaceContainerHigh, no outline. Primary tabs: 48px, 3px primary indicator under the active label. Switch: 52×32 track; off = 2px outline track with 16px outline handle, on = primary track with 24px onPrimary handle. Chips: 32px, 8px radius."
+    }
+  },
+  "design_style": {
+    "aesthetic": {
+      "mood": [
+        "friendly",
+        "soft",
+        "expressive",
+        "approachable"
+      ],
+      "visual_metaphor": "tinted paper surfaces stacked by tone",
+      "era_influence": "Material You / Material 3 (2021–2026)",
+      "genre": "consumer productivity app",
+      "personality_traits": [
+        "warm",
+        "playful but orderly",
+        "accessible"
+      ],
+      "adjectives": [
+        "rounded",
+        "tonal",
+        "tactile",
+        "bold-shaped"
+      ]
+    },
+    "visual_language": {
+      "complexity": "moderate",
+      "ornamentation": "subtle accents",
+      "whitespace_usage": "generous, 8dp rhythm",
+      "visual_weight_distribution": "primary actions are large shapes (FAB, pill buttons)",
+      "focal_strategy": "single hero element (the extended FAB) plus content",
+      "contrast_level": "medium",
+      "texture_usage": "none; tone instead of texture"
+    },
+    "composition": {
+      "hierarchy_method": "scale contrast of shapes and type, colour roles",
+      "balance_type": "asymmetric (drawer + list + detail)",
+      "flow_direction": "top-to-bottom, left-to-right",
+      "grouping_strategy": "containers of different tone",
+      "negative_space_role": "breathing room between rounded containers"
+    },
+    "imagery": {
+      "photo_treatment": "plain, 12px rounded",
+      "illustration_style": "none",
+      "graphic_elements": "pill indicators, rounded containers",
+      "pattern_usage": "none",
+      "image_shape": "rounded rectangle 12px"
+    },
+    "interaction_feel": {
+      "feedback_style": "state layers (8% hover, 10% press/focus)",
+      "hover_behavior": "state-layer overlay and +1 elevation level on cards and FAB",
+      "transition_personality": "smooth glide",
+      "loading_style": "circular / linear progress indicator in primary",
+      "microinteraction_density": "medium"
+    },
+    "brand_voice_in_ui": {
+      "tone": "warm and encouraging",
+      "formality": "casual",
+      "cta_style": "friendly invitation",
+      "empty_state_approach": "headline, supporting text, filled button",
+      "error_tone": "gentle and specific"
+    }
+  },
+  "visual_effects": {
+    "overview": {
+      "effect_intensity": "none",
+      "performance_tier": "lightweight",
+      "fallback_strategy": "reduce to CSS: transitions stop under prefers-reduced-motion",
+      "primary_technology": "CSS only"
+    },
+    "background_effects": {
+      "type": "none",
+      "description": "flat tonal surfaces",
+      "technology": "CSS",
+      "params": {
+        "color_palette": [
+          "#FEF7FF",
+          "#141218"
+        ],
+        "speed": "none",
+        "density": "none",
+        "opacity": "1",
+        "blend_mode": "normal"
+      }
+    },
+    "particle_systems": {
+      "enabled": false,
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "count": "0",
+        "shape": "none",
+        "size_range": "none",
+        "movement_pattern": "none",
+        "color_behavior": "none",
+        "interaction": "none",
+        "spawn_area": "none"
+      }
+    },
+    "3d_elements": {
+      "enabled": false,
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "renderer": "none",
+        "lighting": "none",
+        "camera": "none",
+        "materials": "none",
+        "geometry": "none",
+        "post_processing": [],
+        "interaction_model": "none"
+      }
+    },
+    "shader_effects": {
+      "enabled": false,
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "uniforms": "none",
+        "vertex_manipulation": "none",
+        "fragment_output": "none",
+        "noise_type": "none",
+        "distortion": "none"
+      }
+    },
+    "scroll_effects": {
+      "parallax": {
+        "enabled": false,
+        "layers": "0",
+        "depth_range": "none",
+        "speed_curve": "none"
+      },
+      "scroll_triggered_animations": {
+        "enabled": false,
+        "trigger_points": "none",
+        "animation_type": "none",
+        "scrub_behavior": "none"
+      },
+      "scroll_morphing": {
+        "enabled": false,
+        "description": "not used"
+      }
+    },
+    "text_effects": {
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "split_strategy": "none",
+        "animation_per_unit": "none",
+        "stagger": "none",
+        "effect_style": "none"
+      }
+    },
+    "cursor_effects": {
+      "enabled": false,
+      "type": "none",
+      "description": "system cursor",
+      "params": {
+        "shape": "system",
+        "size": "system",
+        "blend_mode": "normal",
+        "trail": "none",
+        "interaction_zone": "none"
+      }
+    },
+    "image_effects": {
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "filter_pipeline": "none",
+        "hover_transform": "none",
+        "reveal_animation": "none",
+        "distortion_type": "none"
+      }
+    },
+    "glassmorphism_neumorphism": {
+      "enabled": false,
+      "style": "none",
+      "params": {
+        "blur_radius": "0",
+        "transparency": "1",
+        "border_treatment": "none",
+        "shadow_type": "elevation levels",
+        "light_source_angle": "top"
+      }
+    },
+    "canvas_drawings": {
+      "enabled": false,
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "draw_method": "none",
+        "animation_loop": "none",
+        "color_scheme": "none",
+        "responsiveness": "none",
+        "interaction": "none"
+      }
+    },
+    "svg_animations": {
+      "enabled": false,
+      "type": "none",
+      "description": "not used",
+      "params": {
+        "animation_method": "none",
+        "path_morphing": "none",
+        "stroke_animation": "none",
+        "filter_effects": "none"
+      }
+    },
+    "composite_notes": "Material 3 relies on tonal containers and state layers, not effects. Ripple is approximated by the 10% pressed state layer. onSurfaceVariant hint text (#6F6A77) sits between outline and onSurfaceVariant so 12px hints keep 4.5:1 on all containers."
+  }
+}

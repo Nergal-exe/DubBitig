@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit && vite build && tsc -p tsconfig.electron.json",
     "start": "node scripts/start.mjs",
-    "test": "tsx --test tests/service.test.ts tests/data-location.test.ts tests/update.test.ts",
+    "test": "tsx --test tests/service.test.ts tests/data-location.test.ts tests/update.test.ts tests/design-dna.test.ts",
     "test:desktop": "node tests/desktop.mjs",
     "package": "npm run build:integrations && npm run build && electron-builder --win dir",
     "dist": "npm run build:integrations && npm run build && node scripts/build-setup.mjs",
