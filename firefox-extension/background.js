@@ -26,7 +26,9 @@ async function send(request) {
     await api.notifications.create({type:'basic',iconUrl:'icon.png',title:'DubBitig',message:text});
     return {ok:true,text};
   } catch(error) {
-    const text=`Kaydedilemedi: ${error.message}. DubBitig Setup kurulmuş olmalı.`;
+    // Chrome: "Specified native messaging host not found"; Firefox/Zen: "No such native application …".
+    const missingHost=/native messaging host not found|no such native application/i.test(error.message);
+    const text=missingHost?'Kaydedilemedi: DubBitig ile bağlantı kurulamadı. DubBitig masaüstü uygulamasını kurup bir kez açın; Windows’ta Setup, Linux’ta uygulamanın ilk açılışı bağlantıyı kaydeder.':`Kaydedilemedi: ${error.message}`;
     await api.storage.local.set({lastStatus:text});await api.action.setBadgeText({text:'!'});await api.action.setBadgeBackgroundColor({color:'#b92e45'});
     await api.notifications.create({type:'basic',iconUrl:'icon.png',title:'DubBitig bağlantısı',message:text});return {ok:false,text};
   }
