@@ -1,0 +1,487 @@
+{
+  "meta": {
+    "name": "macOS / Native UI",
+    "description": "macOS 26 (Tahoe) desktop language for DubBitig: grouped content on a light window background, a floating Liquid Glass sidebar and toolbar, compact 13pt controls and the system accent for selection.",
+    "source_references": [
+      "Apple Human Interface Guidelines: Color (system colors, semantic label/separator colors), Materials (Liquid Glass), Sidebars, Toolbars, Buttons, Text fields, Typography (macOS built-in text styles)",
+      "AppKit semantic colors: labelColor, secondaryLabelColor, separatorColor, windowBackgroundColor, controlBackgroundColor, controlAccentColor",
+      "HIG Accessibility: Increase Contrast system color variants",
+      "UI/UX Pro Max styles.csv: liquid-glass ('apply sparingly to navigation and controls, keep content on a separate layer, test reduced transparency'); stacks/swiftui.csv: NavigationSplitView for multi-column apps"
+    ],
+    "created_at": "2026-10-27"
+  },
+  "design_system": {
+    "color": {
+      "palette_type": "monochromatic neutrals with a single system accent",
+      "primary": {
+        "hex": "#007AFF",
+        "role": "systemBlue / controlAccentColor: default push button, sidebar selection, focus ring, links"
+      },
+      "secondary": {
+        "hex": "#0068DA",
+        "role": "pressed / hover state of the accent"
+      },
+      "accent": {
+        "hex": "#007AFF",
+        "role": "the only call-to-action colour"
+      },
+      "neutral": {
+        "scale": [
+          "#FFFFFF",
+          "#F6F6F6",
+          "#F2F2F2",
+          "#EBEBED",
+          "#E5E5E5",
+          "#E3E3E8",
+          "#D1D1D6",
+          "#86868B",
+          "#737378",
+          "#6E6E73",
+          "#262626"
+        ],
+        "usage": "#FFFFFF grouped boxes, text fields and buttons; #F6F6F6 raised rows; #F2F2F2 window/content background; #EBEBED sidebar glass base; #E5E5E5 separators; #E3E3E8 hover; #D1D1D6 control borders; #86868B placeholder; #737378 tertiary label raised for 4.5:1; #6E6E73 secondary label; #262626 label (85% black)"
+      },
+      "semantic": {
+        "success": "#248A3D",
+        "warning": "#C93400",
+        "error": "#D70015",
+        "info": "#0040DD"
+      },
+      "surface": {
+        "background": "#F2F2F2",
+        "card": "#FFFFFF",
+        "elevated": "#FFFFFF"
+      },
+      "contrast_strategy": "dark-on-light dominant with grouped white boxes on light grey; text colours use Increase Contrast variants of the system colours",
+      "dark_mode": {
+        "primary": "#0A84FF",
+        "secondary": "#409CFF",
+        "accent": "#0A84FF",
+        "on_accent": "#FFFFFF",
+        "neutral_scale": [
+          "#DFDFDF",
+          "#A1A1A6",
+          "#98989D",
+          "#48484A",
+          "#3A3A3C",
+          "#38383A",
+          "#333336",
+          "#2C2C2E",
+          "#2A2A2C",
+          "#1E1E1E",
+          "#161617"
+        ],
+        "neutral_usage": "#1E1E1E window/content background; #2C2C2E grouped boxes; #2A2A2C sidebar glass base; #333336 raised rows; #3A3A3C hover and buttons; #38383A separators; #48484A control borders; #98989D tertiary label; #A1A1A6 secondary label; #DFDFDF label (85% white); #161617 text fields",
+        "semantic": {
+          "success": "#30D158",
+          "warning": "#FF9F0A",
+          "error": "#FF453A",
+          "info": "#64D2FF"
+        },
+        "surface": {
+          "background": "#1E1E1E",
+          "card": "#2C2C2E",
+          "elevated": "#333336"
+        },
+        "accent_soft": "#0F2A47",
+        "accent_line": "#1F5A99",
+        "accent_fill": "#0060C9"
+      },
+      "accent_soft_light": "#E3EFFF",
+      "accent_line_light": "#9EC7FF",
+      "accent_fill_light": "#0068DA",
+      "accessible_text_variants": {
+        "note": "Official values below WCAG AA 4.5:1 as text on these surfaces, nudged toward black (light) or white (dark) keeping the hue; enforced by tests/design-dna.test.ts.",
+        "dark": {
+          "danger": {
+            "official": "#FF453A",
+            "used": "#FF6B62"
+          },
+          "subtle": {
+            "official": "#98989D",
+            "used": "#9B9B9F"
+          },
+          "muted": {
+            "official": "#A1A1A6",
+            "used": "#A3A3A8"
+          },
+          "accent": {
+            "official": "#0A84FF",
+            "used": "#3D9EFF"
+          }
+        },
+        "light": {
+          "subtle": {
+            "official": "#737378",
+            "used": "#6A6A6F"
+          },
+          "muted": {
+            "official": "#6E6E73",
+            "used": "#65656A"
+          },
+          "success": {
+            "official": "#248A3D",
+            "used": "#207A36"
+          },
+          "warning": {
+            "official": "#C93400",
+            "used": "#C73300"
+          },
+          "accent": {
+            "official": "#007AFF",
+            "used": "#006ADE"
+          }
+        }
+      }
+    },
+    "typography": {
+      "type_scale": {
+        "display": {
+          "size": "26px",
+          "weight": "700",
+          "line_height": "32px",
+          "tracking": "-0.4px"
+        },
+        "heading_1": {
+          "size": "22px",
+          "weight": "700",
+          "line_height": "26px",
+          "tracking": "-0.3px"
+        },
+        "heading_2": {
+          "size": "17px",
+          "weight": "600",
+          "line_height": "22px",
+          "tracking": "-0.2px"
+        },
+        "heading_3": {
+          "size": "15px",
+          "weight": "600",
+          "line_height": "20px",
+          "tracking": "-0.1px"
+        },
+        "body": {
+          "size": "13px",
+          "weight": "400",
+          "line_height": "18px",
+          "tracking": "0"
+        },
+        "body_small": {
+          "size": "12px",
+          "weight": "400",
+          "line_height": "16px",
+          "tracking": "0"
+        },
+        "caption": {
+          "size": "11px",
+          "weight": "400",
+          "line_height": "14px",
+          "tracking": "0"
+        },
+        "overline": {
+          "size": "11px",
+          "weight": "600",
+          "line_height": "14px",
+          "tracking": "0"
+        }
+      },
+      "font_families": {
+        "heading": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"SF Pro\", \"Inter\", \"Helvetica Neue\", \"Noto Sans\", system-ui, sans-serif",
+        "body": "-apple-system, BlinkMacSystemFont, \"SF Pro Text\", \"SF Pro\", \"Inter\", \"Helvetica Neue\", \"Noto Sans\", system-ui, sans-serif",
+        "mono": "\"SF Mono\", ui-monospace, Menlo, \"Cascadia Mono\", monospace"
+      },
+      "font_style_notes": "Neo-grotesque system font, 13pt body (macOS standard), slight negative tracking on titles, bold titles; section headers are small semibold sentence case, not uppercase."
+    },
+    "spacing": {
+      "base_unit": "4px",
+      "scale": [
+        "4px",
+        "6px",
+        "8px",
+        "12px",
+        "16px",
+        "20px",
+        "24px",
+        "32px"
+      ],
+      "content_density": "compact",
+      "section_rhythm": "8px between rows, 20px between grouped boxes"
+    },
+    "layout": {
+      "grid_system": "NavigationSplitView: inset sidebar, content list, detail (inspector)",
+      "max_content_width": "none (fills window)",
+      "columns": "3 (sidebar, content, inspector)",
+      "gutter": "8px",
+      "breakpoints": {
+        "compact": "900px",
+        "regular": "900px+"
+      },
+      "alignment_tendency": "strict grid"
+    },
+    "shape": {
+      "border_radius": {
+        "small": "6px",
+        "medium": "8px",
+        "large": "12px",
+        "pill": "9999px"
+      },
+      "border_usage": "hairline separators; controls have a 0.5–1px edge plus a faint drop shadow",
+      "divider_style": "1px separatorColor, inset from the leading edge in lists"
+    },
+    "elevation": {
+      "shadow_style": "soft diffused",
+      "levels": {
+        "low": "0 0.5px 1px #0000002E",
+        "medium": "0 6px 18px #0000001F",
+        "high": "0 22px 70px #00000038, 0 0 0 0.5px #0000002E"
+      },
+      "depth_cues": "blur/glass for navigation and controls, shadows for windows and sheets"
+    },
+    "iconography": {
+      "style": "SF Symbols-like regular weight line icons",
+      "stroke_weight": "1.5px at 16px",
+      "size_scale": [
+        "13px",
+        "16px",
+        "18px",
+        "22px"
+      ],
+      "preferred_set": "SF Symbols (app keeps Phosphor/Lucide regular weight)"
+    },
+    "motion": {
+      "easing": "cubic-bezier(0.25, 0.1, 0.25, 1)",
+      "duration_scale": {
+        "micro": "100ms",
+        "normal": "200ms",
+        "macro": "350ms"
+      },
+      "entrance_pattern": "sheets slide down from the toolbar and fade; popovers scale from 0.96",
+      "exit_pattern": "fade out quickly (150ms)",
+      "philosophy": "minimal functional with soft springs"
+    },
+    "components": {
+      "button_style": "Push button: white (dark: #3A3A3C) fill, hairline edge, faint shadow, 28px high, 13px text, 6px radius. Default button: system accent fill with a subtle top-to-bottom gradient and white text. Toolbar buttons: grouped in a Liquid Glass capsule.",
+      "input_style": "Text field: white fill, 1px border, 6px radius, 30px high; focus ring outside the field: 3.5px accent at ~45% opacity.",
+      "card_style": "Grouped box (System Settings style): white on light grey, 10px radius, hairline border, almost no shadow.",
+      "navigation_pattern": "Floating inset sidebar on Liquid Glass with 12px corners; rows 28px, selected row filled with the accent and white text and icon.",
+      "modal_style": "Sheet/window: 12px radius, large soft shadow and 0.5px edge; title 15px semibold.",
+      "list_style": "Rows 28–32px, inset separators, accent selection.",
+      "component_notes": "Switch 38×22 with a white 20px knob in both states and accent track when on. Segmented controls and pickers use white raised segments on a grey track."
+    }
+  },
+  "design_style": {
+    "aesthetic": {
+      "mood": [
+        "refined",
+        "light",
+        "precise",
+        "calm"
+      ],
+      "visual_metaphor": "content on paper, controls on a sheet of glass floating above it",
+      "era_influence": "macOS 26 Tahoe with Liquid Glass over the Big Sur–Sequoia layout",
+      "genre": "native desktop utility",
+      "personality_traits": [
+        "polished",
+        "understated",
+        "detail-oriented"
+      ],
+      "adjectives": [
+        "airy",
+        "crisp",
+        "compact",
+        "tactile"
+      ]
+    },
+    "visual_language": {
+      "complexity": "minimal",
+      "ornamentation": "subtle accents",
+      "whitespace_usage": "compact controls, generous margins around groups",
+      "visual_weight_distribution": "chrome is light and translucent, content carries the weight",
+      "focal_strategy": "distributed interest",
+      "contrast_level": "medium",
+      "texture_usage": "glass highlight edges only"
+    },
+    "composition": {
+      "hierarchy_method": "typographic hierarchy (bold titles) and grouping",
+      "balance_type": "asymmetric (sidebar + content + inspector)",
+      "flow_direction": "left-to-right",
+      "grouping_strategy": "grouped boxes with inset separators",
+      "negative_space_role": "frames groups and lets glass chrome float"
+    },
+    "imagery": {
+      "photo_treatment": "plain, rounded 8px",
+      "illustration_style": "none",
+      "graphic_elements": "SF Symbols-like icons",
+      "pattern_usage": "none",
+      "image_shape": "rounded rectangle 8px"
+    },
+    "interaction_feel": {
+      "feedback_style": "subtle darkening on press, accent focus ring",
+      "hover_behavior": "almost none on controls; rows get a faint fill",
+      "transition_personality": "smooth glide",
+      "loading_style": "spinning gear / indeterminate bar",
+      "microinteraction_density": "low"
+    },
+    "brand_voice_in_ui": {
+      "tone": "friendly and concise",
+      "formality": "neutral",
+      "cta_style": "subtle suggestion",
+      "empty_state_approach": "centred title, one line of help, one default button",
+      "error_tone": "calm, explains and suggests a fix"
+    }
+  },
+  "visual_effects": {
+    "overview": {
+      "effect_intensity": "subtle-accent",
+      "performance_tier": "lightweight",
+      "fallback_strategy": "disable effects: with prefers-reduced-transparency the glass becomes an opaque fill",
+      "primary_technology": "CSS only"
+    },
+    "background_effects": {
+      "type": "none",
+      "description": "flat window background; depth comes from the glass chrome",
+      "technology": "CSS",
+      "params": {
+        "color_palette": [
+          "#F2F2F2",
+          "#1E1E1E"
+        ],
+        "speed": "none",
+        "density": "none",
+        "opacity": "1",
+        "blend_mode": "normal"
+      }
+    },
+    "particle_systems": {
+      "enabled": false,
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "count": "0",
+        "shape": "none",
+        "size_range": "none",
+        "movement_pattern": "none",
+        "color_behavior": "none",
+        "interaction": "none",
+        "spawn_area": "none"
+      }
+    },
+    "3d_elements": {
+      "enabled": false,
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "renderer": "none",
+        "lighting": "none",
+        "camera": "none",
+        "materials": "none",
+        "geometry": "none",
+        "post_processing": [],
+        "interaction_model": "none"
+      }
+    },
+    "shader_effects": {
+      "enabled": false,
+      "type": "none",
+      "description": "true lensing/refraction of Liquid Glass is not reproduced",
+      "technology": "none",
+      "params": {
+        "uniforms": "none",
+        "vertex_manipulation": "none",
+        "fragment_output": "none",
+        "noise_type": "none",
+        "distortion": "none"
+      }
+    },
+    "scroll_effects": {
+      "parallax": {
+        "enabled": false,
+        "layers": "0",
+        "depth_range": "none",
+        "speed_curve": "none"
+      },
+      "scroll_triggered_animations": {
+        "enabled": false,
+        "trigger_points": "none",
+        "animation_type": "none",
+        "scrub_behavior": "none"
+      },
+      "scroll_morphing": {
+        "enabled": false,
+        "description": "not used"
+      }
+    },
+    "text_effects": {
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "split_strategy": "none",
+        "animation_per_unit": "none",
+        "stagger": "none",
+        "effect_style": "none"
+      }
+    },
+    "cursor_effects": {
+      "enabled": false,
+      "type": "none",
+      "description": "system cursor",
+      "params": {
+        "shape": "system",
+        "size": "system",
+        "blend_mode": "normal",
+        "trail": "none",
+        "interaction_zone": "none"
+      }
+    },
+    "image_effects": {
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "filter_pipeline": "none",
+        "hover_transform": "none",
+        "reveal_animation": "none",
+        "distortion_type": "none"
+      }
+    },
+    "glassmorphism_neumorphism": {
+      "enabled": true,
+      "style": "glass",
+      "params": {
+        "blur_radius": "24px (saturate 180%)",
+        "transparency": "0.72 light / 0.7 dark tint",
+        "border_treatment": "0.5px inner highlight on top (#FFFFFF99 light / #FFFFFF1F dark), hairline outer edge in the control-border colour",
+        "shadow_type": "soft ambient 0 8px 24px at 8–24%",
+        "light_source_angle": "top"
+      }
+    },
+    "canvas_drawings": {
+      "enabled": false,
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "draw_method": "none",
+        "animation_loop": "none",
+        "color_scheme": "none",
+        "responsiveness": "none",
+        "interaction": "none"
+      }
+    },
+    "svg_animations": {
+      "enabled": false,
+      "type": "none",
+      "description": "not used",
+      "params": {
+        "animation_method": "none",
+        "path_morphing": "none",
+        "stroke_animation": "none",
+        "filter_effects": "none"
+      }
+    },
+    "composite_notes": "Liquid Glass is applied only to navigation and controls (inset sidebar, toolbar capsule, suggestion popover) as UI/UX Pro Max advises; content cards stay opaque. Lensing/refraction would need WebGL and is approximated with blur + saturation + highlight edges. Secondary/tertiary label colours were darkened (e.g. #737378) so 12px hints keep 4.5:1. Filled surfaces that carry white text (default button, selected sidebar row) use accent_fill (#0068DA light, #0060C9 dark) because white on systemBlue is only 4.0:1 (light) and 3.6:1 (dark); rings, icons and links keep systemBlue."
+  }
+}

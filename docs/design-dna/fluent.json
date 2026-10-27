@@ -1,0 +1,456 @@
+{
+  "meta": {
+    "name": "Fluent Design (Windows 11)",
+    "description": "Windows 11 / Fluent 2 desktop language for DubBitig: Mica window surfaces, Acrylic flyouts, 4px controls, quiet neutral hierarchy with a single accent.",
+    "source_references": [
+      "Windows App SDK / WinUI 3 theme resources (Common_themeresources_any.xaml): fill, stroke, text and accent brushes",
+      "learn.microsoft.com/windows/apps/design/signature-experiences/materials (Mica vs Acrylic)",
+      "learn.microsoft.com/windows/apps/design/signature-experiences/geometry (ControlCornerRadius 4, OverlayCornerRadius 8)",
+      "learn.microsoft.com/windows/apps/design/signature-experiences/typography (Windows type ramp)",
+      "fluent2.microsoft.design (shadow, motion and spacing tokens)",
+      "UI/UX Pro Max styles.csv: fluent-2; stacks/winui.csv: 'Choose Mica vs Acrylic by surface lifetime'"
+    ],
+    "created_at": "2026-10-27"
+  },
+  "design_system": {
+    "color": {
+      "palette_type": "monochromatic neutrals with a single accent",
+      "primary": {
+        "hex": "#005FB8",
+        "role": "Windows default accent (AccentFillColorDefault, light): accent buttons, selection pill, focused text box underline, links"
+      },
+      "secondary": {
+        "hex": "#196EBF",
+        "role": "accent hover (AccentFillColorSecondary over Mica)"
+      },
+      "accent": {
+        "hex": "#005FB8",
+        "role": "the only call-to-action colour; Windows uses one accent everywhere"
+      },
+      "neutral": {
+        "scale": [
+          "#FFFFFF",
+          "#FBFBFB",
+          "#F9F9F9",
+          "#F3F3F3",
+          "#EEEEEE",
+          "#EAEAEA",
+          "#E5E5E5",
+          "#868686",
+          "#6E6E6E",
+          "#5F5F5F",
+          "#1A1A1A"
+        ],
+        "usage": "#F3F3F3 Mica window base; #EEEEEE navigation pane; #FBFBFB cards and controls (ControlFillColorDefault over Mica); #F9F9F9 control hover; #EAEAEA subtle hover / selected navigation item; #E5E5E5 card and control stroke; #868686 text box bottom stroke and switch outline (ControlStrongStroke); #6E6E6E tertiary text raised from WinUI's #8B8B8B to meet 4.5:1; #5F5F5F secondary text; #1A1A1A primary text (TextFillColorPrimary)"
+      },
+      "semantic": {
+        "success": "#0F7B0F",
+        "warning": "#9D5D00",
+        "error": "#C42B1C",
+        "info": "#005FB7"
+      },
+      "surface": {
+        "background": "#F3F3F3",
+        "card": "#FBFBFB",
+        "elevated": "#FFFFFF"
+      },
+      "contrast_strategy": "subtle layers: near-white cards on light grey Mica, separation by 1px stroke rather than shadow; text contrast at least 4.5:1",
+      "dark_mode": {
+        "primary": "#60CDFF",
+        "secondary": "#5BBAE8",
+        "accent": "#60CDFF",
+        "on_accent": "#002F45",
+        "neutral_scale": [
+          "#FFFFFF",
+          "#C5C5C5",
+          "#9A9A9A",
+          "#3D3D3D",
+          "#383838",
+          "#333333",
+          "#2D2D2D",
+          "#2B2B2B",
+          "#282828",
+          "#202020",
+          "#1C1C1C"
+        ],
+        "neutral_usage": "#202020 Mica base; #1C1C1C navigation pane; #2B2B2B cards; #2D2D2D controls and subtle hover; #323232 control hover; #383838 selected navigation item; #3D3D3D stroke; #9A9A9A tertiary text and strong stroke; #C5C5C5 secondary text; #FFFFFF primary text",
+        "semantic": {
+          "success": "#6CCB5F",
+          "warning": "#FCE100",
+          "error": "#FF99A4",
+          "info": "#60CDFF"
+        },
+        "surface": {
+          "background": "#202020",
+          "card": "#2B2B2B",
+          "elevated": "#2C2C2C"
+        },
+        "accent_soft": "#1D3542",
+        "accent_line": "#2F6987",
+        "control_hover": "#323232"
+      },
+      "accent_soft_light": "#E1EDF8",
+      "accent_line_light": "#9CC2E7",
+      "accessible_text_variants": {
+        "note": "Official values below WCAG AA 4.5:1 as text on these surfaces, nudged toward black (light) or white (dark) keeping the hue; enforced by tests/design-dna.test.ts.",
+        "light": {
+          "subtle": {
+            "official": "#6E6E6E",
+            "used": "#6C6C6C"
+          }
+        }
+      }
+    },
+    "typography": {
+      "type_scale": {
+        "display": {
+          "size": "68px",
+          "weight": "600",
+          "line_height": "92px",
+          "tracking": "0"
+        },
+        "heading_1": {
+          "size": "28px",
+          "weight": "600",
+          "line_height": "36px",
+          "tracking": "0"
+        },
+        "heading_2": {
+          "size": "20px",
+          "weight": "600",
+          "line_height": "28px",
+          "tracking": "0"
+        },
+        "heading_3": {
+          "size": "14px",
+          "weight": "600",
+          "line_height": "20px",
+          "tracking": "0"
+        },
+        "body": {
+          "size": "14px",
+          "weight": "400",
+          "line_height": "20px",
+          "tracking": "0"
+        },
+        "body_small": {
+          "size": "12px",
+          "weight": "400",
+          "line_height": "16px",
+          "tracking": "0"
+        },
+        "caption": {
+          "size": "12px",
+          "weight": "400",
+          "line_height": "16px",
+          "tracking": "0"
+        },
+        "overline": {
+          "size": "12px",
+          "weight": "600",
+          "line_height": "16px",
+          "tracking": "0"
+        }
+      },
+      "font_families": {
+        "heading": "\"Segoe UI Variable Display\", \"Segoe UI Variable\", \"Segoe UI\", \"Selawik\", \"Noto Sans\", system-ui, sans-serif",
+        "body": "\"Segoe UI Variable Text\", \"Segoe UI Variable\", \"Segoe UI\", \"Selawik\", \"Noto Sans\", system-ui, sans-serif",
+        "mono": "\"Cascadia Mono\", \"Cascadia Code\", Consolas, monospace"
+      },
+      "font_style_notes": "Humanist sans with optical sizes (Text below 20px, Display above). Semibold 600 is the only emphasis weight; no uppercase section labels except small overlines."
+    },
+    "spacing": {
+      "base_unit": "4px",
+      "scale": [
+        "4px",
+        "8px",
+        "12px",
+        "16px",
+        "20px",
+        "24px",
+        "32px",
+        "40px",
+        "48px"
+      ],
+      "content_density": "comfortable",
+      "section_rhythm": "12px inside cards, 24px between groups, 36px navigation items"
+    },
+    "layout": {
+      "grid_system": "NavigationView: left pane + content frame on a 4px grid",
+      "max_content_width": "none (fills window)",
+      "columns": "3 (navigation pane 248px, content, detail pane 380px)",
+      "gutter": "12px",
+      "breakpoints": {
+        "compact": "640px",
+        "medium": "1008px",
+        "expanded": "1008px+"
+      },
+      "alignment_tendency": "strict grid"
+    },
+    "shape": {
+      "border_radius": {
+        "small": "4px",
+        "medium": "4px",
+        "large": "8px",
+        "pill": "9999px"
+      },
+      "border_usage": "subtle 1px stroke on every control and card; text boxes add a darker bottom stroke",
+      "divider_style": "1px DividerStroke, full bleed inside panes"
+    },
+    "elevation": {
+      "shadow_style": "layered (ambient 2px blur + key shadow), used sparingly",
+      "levels": {
+        "low": "0 0 2px #0000001F, 0 1px 2px #00000024",
+        "medium": "0 0 2px #0000001F, 0 8px 16px #00000024",
+        "high": "0 0 8px #0000001F, 0 32px 64px #00000038"
+      },
+      "depth_cues": "material layers (Mica, Layer, Acrylic) and strokes; shadow only for flyouts and dialogs"
+    },
+    "iconography": {
+      "style": "outlined, Fluent System Icons / Segoe Fluent Icons look",
+      "stroke_weight": "1.5px at 16px",
+      "size_scale": [
+        "12px",
+        "16px",
+        "20px",
+        "24px"
+      ],
+      "preferred_set": "Fluent System Icons (app keeps Phosphor/Lucide regular weight, which is visually close)"
+    },
+    "motion": {
+      "easing": "cubic-bezier(0, 0, 0, 1)",
+      "duration_scale": {
+        "micro": "83ms",
+        "normal": "167ms",
+        "macro": "250ms"
+      },
+      "entrance_pattern": "fade + 8px slide up with decelerate curve",
+      "exit_pattern": "fade out, faster than entrance (accelerate cubic-bezier(1, 0, 1, 1))",
+      "philosophy": "minimal functional"
+    },
+    "components": {
+      "button_style": "Standard: ControlFill background, 1px stroke with darker bottom edge (ControlElevationBorder), 4px radius, 32px high. Accent: accent fill, white text, darker bottom edge.",
+      "input_style": "Text box: ControlFill, 4px radius, 1px stroke, 1px strong bottom stroke; on focus the bottom becomes a 2px accent line and the field turns white. No outer glow.",
+      "card_style": "CardBackground fill, 1px CardStroke, 8px radius, no shadow; hover lightens fill slightly.",
+      "navigation_pattern": "NavigationView left pane: 36px items, 4px radius, selected = SubtleFillSecondary with a 3×16px accent pill inside the item's left edge.",
+      "modal_style": "ContentDialog: 8px radius, Layer fill, shadow 'high', smoke overlay; command bar at the bottom on a slightly darker band.",
+      "list_style": "List rows 40px, subtle hover fill, same accent pill for selection.",
+      "component_notes": "ToggleSwitch 40×20: off = strong-stroke outline with 12px knob, on = accent fill with 12px white knob. Focus visual: 2px primary-text outline with 1px gap (keyboard only)."
+    }
+  },
+  "design_style": {
+    "aesthetic": {
+      "mood": [
+        "calm",
+        "familiar",
+        "productive",
+        "light"
+      ],
+      "visual_metaphor": "layered sheets of material on the desktop",
+      "era_influence": "Windows 11 (2021–2026)",
+      "genre": "desktop productivity / enterprise",
+      "personality_traits": [
+        "dependable",
+        "quiet",
+        "efficient"
+      ],
+      "adjectives": [
+        "soft",
+        "neutral",
+        "tidy",
+        "platform-native"
+      ]
+    },
+    "visual_language": {
+      "complexity": "minimal",
+      "ornamentation": "none",
+      "whitespace_usage": "moderate, consistent 4px grid",
+      "visual_weight_distribution": "even; weight comes from the accent only",
+      "focal_strategy": "distributed interest",
+      "contrast_level": "medium",
+      "texture_usage": "material translucency (Mica/Acrylic) instead of texture"
+    },
+    "composition": {
+      "hierarchy_method": "typographic hierarchy and material layers",
+      "balance_type": "asymmetric (pane + content)",
+      "flow_direction": "left-to-right, top-to-bottom",
+      "grouping_strategy": "cards on a layer, strokes between groups",
+      "negative_space_role": "separates layers rather than decorating"
+    },
+    "imagery": {
+      "photo_treatment": "plain, 8px rounded",
+      "illustration_style": "none",
+      "graphic_elements": "accent pill indicators",
+      "pattern_usage": "none",
+      "image_shape": "rounded rectangle 8px"
+    },
+    "interaction_feel": {
+      "feedback_style": "fill change on hover, darker on press",
+      "hover_behavior": "subtle fill shift, no movement",
+      "transition_personality": "snappy",
+      "loading_style": "indeterminate ring / bar",
+      "microinteraction_density": "low"
+    },
+    "brand_voice_in_ui": {
+      "tone": "plain and helpful",
+      "formality": "neutral",
+      "cta_style": "direct imperative",
+      "empty_state_approach": "short explanation and a single accent button",
+      "error_tone": "factual, says what to do next"
+    }
+  },
+  "visual_effects": {
+    "overview": {
+      "effect_intensity": "subtle-accent",
+      "performance_tier": "lightweight",
+      "fallback_strategy": "reduce to CSS: Acrylic becomes an opaque fill when transparency is reduced",
+      "primary_technology": "CSS only"
+    },
+    "background_effects": {
+      "type": "none",
+      "description": "Mica is emulated with its solid fallback colour; real Mica would need a transparent Electron window",
+      "technology": "CSS",
+      "params": {
+        "color_palette": [
+          "#F3F3F3",
+          "#202020"
+        ],
+        "speed": "none",
+        "density": "none",
+        "opacity": "1",
+        "blend_mode": "normal"
+      }
+    },
+    "particle_systems": {
+      "enabled": false,
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "count": "0",
+        "shape": "none",
+        "size_range": "none",
+        "movement_pattern": "none",
+        "color_behavior": "none",
+        "interaction": "none",
+        "spawn_area": "none"
+      }
+    },
+    "3d_elements": {
+      "enabled": false,
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "renderer": "none",
+        "lighting": "none",
+        "camera": "none",
+        "materials": "none",
+        "geometry": "none",
+        "post_processing": [],
+        "interaction_model": "none"
+      }
+    },
+    "shader_effects": {
+      "enabled": false,
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "uniforms": "none",
+        "vertex_manipulation": "none",
+        "fragment_output": "none",
+        "noise_type": "none",
+        "distortion": "none"
+      }
+    },
+    "scroll_effects": {
+      "parallax": {
+        "enabled": false,
+        "layers": "0",
+        "depth_range": "none",
+        "speed_curve": "none"
+      },
+      "scroll_triggered_animations": {
+        "enabled": false,
+        "trigger_points": "none",
+        "animation_type": "none",
+        "scrub_behavior": "none"
+      },
+      "scroll_morphing": {
+        "enabled": false,
+        "description": "not used"
+      }
+    },
+    "text_effects": {
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "split_strategy": "none",
+        "animation_per_unit": "none",
+        "stagger": "none",
+        "effect_style": "none"
+      }
+    },
+    "cursor_effects": {
+      "enabled": false,
+      "type": "none",
+      "description": "system cursor",
+      "params": {
+        "shape": "system",
+        "size": "system",
+        "blend_mode": "normal",
+        "trail": "none",
+        "interaction_zone": "none"
+      }
+    },
+    "image_effects": {
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "filter_pipeline": "none",
+        "hover_transform": "none",
+        "reveal_animation": "none",
+        "distortion_type": "none"
+      }
+    },
+    "glassmorphism_neumorphism": {
+      "enabled": true,
+      "style": "frosted-layers",
+      "params": {
+        "blur_radius": "30px",
+        "transparency": "0.85 light / 0.9 dark (Acrylic in-app tint)",
+        "border_treatment": "1px surface stroke",
+        "shadow_type": "elevation medium",
+        "light_source_angle": "top"
+      }
+    },
+    "canvas_drawings": {
+      "enabled": false,
+      "type": "none",
+      "description": "not used",
+      "technology": "none",
+      "params": {
+        "draw_method": "none",
+        "animation_loop": "none",
+        "color_scheme": "none",
+        "responsiveness": "none",
+        "interaction": "none"
+      }
+    },
+    "svg_animations": {
+      "enabled": false,
+      "type": "none",
+      "description": "not used",
+      "params": {
+        "animation_method": "none",
+        "path_morphing": "none",
+        "stroke_animation": "none",
+        "filter_effects": "none"
+      }
+    },
+    "composite_notes": "Per WinUI guidance Mica belongs to long-lived window surfaces and Acrylic to transient light-dismiss surfaces: Acrylic is applied only to the typeahead/suggestion list. Mica uses its solid colours because the Electron window is opaque. Tertiary text was darkened from WinUI's #8B8B8B (3.5:1) to #6E6E6E to keep 12px hints at WCAG AA."
+  }
+}
