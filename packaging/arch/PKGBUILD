@@ -1,6 +1,6 @@
 # Arch Linux / CachyOS paketi. Kurulum: bu klasörde `makepkg -si`
 pkgname=dubbitig
-pkgver=1.12.0
+pkgver=1.12.1
 pkgrel=1
 pkgdesc="Komutlar, bağlantılar, notlar ve fotoğraflar için kişisel arşiv"
 arch=('x86_64')
