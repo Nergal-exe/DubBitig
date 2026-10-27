@@ -2,6 +2,7 @@ import { app } from 'electron';
 import { chmodSync, copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
+import { geckoManifestDirs } from './browser-hosts.js';
 
 const quote = (value: string) => `'${value.replace(/'/g, `'\\''`)}'`;
 const chromiumProfiles = ['google-chrome', 'google-chrome-beta', 'chromium', 'BraveSoftware/Brave-Browser', 'microsoft-edge', 'vivaldi'];
@@ -31,8 +32,8 @@ export function registerLinuxBrowserHost(dataPath: string) {
     const folder = join(config, profile, 'NativeMessagingHosts'); mkdirSync(folder, { recursive: true });
     writeFileSync(join(folder, 'com.dubbitig.capture.json'), JSON.stringify(chrome, null, 2));
   }
-  if (existsSync(join(homedir(), '.mozilla'))) {
-    const folder = join(homedir(), '.mozilla', 'native-messaging-hosts'); mkdirSync(folder, { recursive: true });
+  for (const folder of geckoManifestDirs(homedir(), config, existsSync)) {
+    mkdirSync(folder, { recursive: true });
     writeFileSync(join(folder, 'com.dubbitig.capture.json'), JSON.stringify(firefox, null, 2));
   }
 }
